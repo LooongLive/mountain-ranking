@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.tsbuildinfo
+*.zip
+
+.env
+.env.local
+.env.*.local
+
+.tools/
+.supabase-home/
+supabase/.temp/
+.gh-pages-deploy/
+.DS_Store
