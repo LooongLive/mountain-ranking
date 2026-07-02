@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CI Ranking TV</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #102033;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      color: #17324f;
+    }
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #dfe9f4;
+    }
+    .bg {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-position: center center;
+      background-size: cover;
+      opacity: .7;
+    }
+    .shade {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, .2);
+    }
+    .title {
+      position: absolute;
+      top: 24px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 5;
+      text-shadow: 0 2px 8px rgba(255,255,255,.75);
+    }
+    .title h1 {
+      margin: 0;
+      font-size: 42px;
+      line-height: 1.2;
+      font-weight: 800;
+    }
+    .title p {
+      margin: 8px 0 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    #path {
+      position: absolute;
+      left: 8%;
+      top: 18%;
+      width: 84%;
+      height: 72%;
+      z-index: 2;
+    }
+    .dept {
+      position: absolute;
+      z-index: 6;
+      min-width: 150px;
+      max-width: 260px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 2px solid rgba(255,255,255,.75);
+      background: rgba(255,255,255,.72);
+      box-shadow: 0 8px 22px rgba(20, 40, 70, .22);
+      text-align: center;
+    }
+    .dept-name {
+      display: block;
+      font-size: 22px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .dept-count {
+      display: block;
+      margin-top: 4px;
+      font-size: 32px;
+      line-height: 1;
+      font-weight: 900;
+      color: #a32f22;
+    }
+    .dept-unit {
+      font-size: 18px;
+      color: #333;
+      margin-left: 4px;
+    }
+    .module {
+      position: absolute;
+      z-index: 4;
+      background: rgba(255,255,255,.8);
+      border: 2px solid rgba(255,255,255,.8);
+      box-shadow: 0 8px 20px rgba(20,40,70,.22);
+      overflow: hidden;
+    }
+    .module-title {
+      height: 30px;
+      line-height: 30px;
+      padding: 0 10px;
+      font-size: 16px;
+      font-weight: 700;
+      background: rgba(255,255,255,.65);
+    }
+    .module img,
+    .module video {
+      width: 100%;
+      height: calc(100% - 30px);
+      object-fit: contain;
+      background: #111;
+    }
+    #status {
+      position: absolute;
+      left: 20px;
+      bottom: 16px;
+      z-index: 20;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(0,0,0,.55);
+      color: #fff;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="bg" id="bg"></div>
+    <div class="shade"></div>
+    <svg id="path" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <path d="M 6 92 C 22 78, 33 71, 42 60 S 58 37, 72 25 S 86 14, 96 5"
+        fill="none" stroke="#1e3a5f" stroke-width=".7" stroke-dasharray="3 3"
+        stroke-linecap="round"></path>
+    </svg>
+    <div class="title">
+      <h1 id="mainTitle">CI Ranking</h1>
+      <p id="subTitle">Loading...</p>
+    </div>
+    <div id="departments"></div>
+    <div id="modules"></div>
+    <div id="status">正在读取云端数据...</div>
+  </div>
+
+  <script>
+    (function () {
+      var SUPABASE_URL = 'https://ochhwfntlpzwjextvxsh.supabase.co';
+      var ANON_KEY = 'sb_publishable_rqJNhAe_muGxtreVFihdUA_Ou5g4S-N';
+      var BOARD_ID = 'headquarters-suggestions';
+      var fallbackBg = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80';
+
+      function byId(id) {
+        return document.getElementById(id);
+      }
+
+      function esc(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function setStatus(text) {
+        byId('status').innerHTML = esc(text);
+      }
+
+      function get(url, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.setRequestHeader('apikey', ANON_KEY);
+        xhr.setRequestHeader('Authorization', 'Bearer ' + ANON_KEY);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState !== 4) return;
+          if (xhr.status >= 200 && xhr.status < 300) {
+            callback(null, xhr.responseText);
+          } else {
+            callback(new Error('HTTP ' + xhr.status), xhr.responseText);
+          }
+        };
+        xhr.onerror = function () {
+          callback(new Error('网络请求失败'), '');
+        };
+        xhr.send(null);
+      }
+
+      function normalizeData(data) {
+        data = data || {};
+        data.theme = data.theme || {};
+        data.departments = data.departments || [];
+        data.floatModules = data.floatModules || [];
+        return data;
+      }
+
+      function render(data) {
+        data = normalizeData(data);
+        var theme = data.theme;
+        var departments = data.departments.slice(0);
+        var modules = data.floatModules || [];
+        var i;
+
+        byId('bg').style.backgroundImage = 'url("' + esc(theme.backgroundImage || fallbackBg) + '")';
+        byId('mainTitle').innerHTML = esc(theme.mainTitle || 'CI Ranking');
+        byId('subTitle').innerHTML = esc(theme.subTitle || '');
+        byId('mainTitle').style.color = theme.mainTitleColor || '#17324f';
+        byId('subTitle').style.color = theme.subTitleColor || '#17324f';
+
+        if (!data.isManualMode) {
+          departments.sort(function (a, b) {
+            return (Number(b.count) || 0) - (Number(a.count) || 0);
+          });
+        }
+
+        var deptHtml = '';
+        for (i = 0; i < departments.length; i++) {
+          var d = departments[i];
+          var x = d.position && typeof d.position.x === 'number' ? d.position.x : (20 + i * 10);
+          var y = d.position && typeof d.position.y === 'number' ? d.position.y : (25 + i * 9);
+          deptHtml += '<div class="dept" style="left:' + x + '%;top:' + y + '%;">'
+            + '<span class="dept-name">' + esc(d.name) + '</span>'
+            + '<span class="dept-count">' + esc(d.count) + '<span class="dept-unit">' + esc(d.unit || '件') + '</span></span>'
+            + '</div>';
+        }
+        byId('departments').innerHTML = deptHtml;
+
+        var moduleHtml = '';
+        for (i = 0; i < modules.length; i++) {
+          var m = modules[i];
+          if (!m || !m.contentUrl || m.minimized) continue;
+          var left = m.position ? Number(m.position.x) || 0 : 0;
+          var top = m.position ? Number(m.position.y) || 0 : 0;
+          var width = m.size ? Number(m.size.width) || 280 : 280;
+          var height = m.size ? Number(m.size.height) || 180 : 180;
+          moduleHtml += '<div class="module" style="left:' + left + 'px;top:' + top + 'px;width:' + width + 'px;height:' + height + 'px;">'
+            + '<div class="module-title">' + esc(m.title || '') + '</div>';
+          if (m.type === 'video') {
+            moduleHtml += '<video src="' + esc(m.contentUrl) + '" autoplay muted loop playsinline></video>';
+          } else {
+            moduleHtml += '<img src="' + esc(m.contentUrl) + '" alt="">';
+          }
+          moduleHtml += '</div>';
+        }
+        byId('modules').innerHTML = moduleHtml;
+        setStatus('电视兼容版已加载。每 60 秒自动刷新。');
+      }
+
+      function load() {
+        var url = SUPABASE_URL + '/rest/v1/dashboard_pages?id=eq.' + encodeURIComponent(BOARD_ID)
+          + '&select=data&limit=1&_=' + new Date().getTime();
+        get(url, function (err, text) {
+          if (err) {
+            setStatus('云端数据读取失败：' + err.message);
+            return;
+          }
+          try {
+            var rows = JSON.parse(text);
+            if (!rows || !rows[0] || !rows[0].data) {
+              setStatus('云端暂无看板数据，请先在电脑端保存一次。');
+              return;
+            }
+            render(rows[0].data);
+          } catch (e) {
+            setStatus('数据解析失败：' + e.message);
+          }
+        });
+      }
+
+      load();
+      setInterval(load, 60000);
+    })();
+  </script>
+</body>
+</html>
