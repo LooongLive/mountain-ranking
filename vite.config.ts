@@ -6,6 +6,10 @@ import path from 'path';
 export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss()],
+  build: {
+    target: 'es2015',
+    cssTarget: 'chrome49',
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
