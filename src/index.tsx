@@ -4,7 +4,9 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './app';
 import './index.css';
 
-const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, '');
+const routerBasename = window.location.pathname.startsWith('/mountain-ranking')
+  ? '/mountain-ranking'
+  : undefined;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
