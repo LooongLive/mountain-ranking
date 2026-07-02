@@ -9,10 +9,6 @@ cd "$ROOT_DIR"
 
 npm run build
 
-# Older TV WebView versions may not execute module scripts. The Vite bundle is
-# already self-contained, so publish it as a classic deferred script for TVs.
-perl -0pi -e 's/<script type="module" crossorigin src=/<script defer crossorigin src=/' dist/index.html
-
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git init
 fi
