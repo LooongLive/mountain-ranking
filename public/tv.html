@@ -343,7 +343,7 @@
       }
 
       function load() {
-        var url = SUPABASE_URL + '/rest/v1/dashboard_pages?select=data&id=eq.headquarters-suggestions&limit=1&ts=' + new Date().getTime();
+        var url = SUPABASE_URL + '/rest/v1/dashboard_pages?select=data&id=eq.headquarters-suggestions&limit=1';
         get(url, function (err, text) {
           if (err) {
             setStatus('云端数据读取失败：' + err.message);
