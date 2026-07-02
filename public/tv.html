@@ -10,7 +10,7 @@
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background: #102033;
+      background: #07131f;
       font-family: Arial, "Microsoft YaHei", sans-serif;
       color: #17324f;
     }
@@ -21,7 +21,8 @@
       overflow: hidden;
       background: #dfe9f4;
     }
-    .bg {
+    .bg,
+    .bg-video {
       position: absolute;
       left: 0;
       top: 0;
@@ -29,7 +30,8 @@
       height: 100%;
       background-position: center center;
       background-size: cover;
-      opacity: .7;
+      opacity: 1;
+      object-fit: cover;
     }
     .shade {
       position: absolute;
@@ -37,11 +39,11 @@
       top: 0;
       width: 100%;
       height: 100%;
-      background: rgba(255, 255, 255, .2);
+      background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.08));
     }
     .title {
       position: absolute;
-      top: 24px;
+      top: 34px;
       left: 0;
       width: 100%;
       text-align: center;
@@ -61,49 +63,67 @@
     }
     #path {
       position: absolute;
-      left: 8%;
-      top: 18%;
-      width: 84%;
-      height: 72%;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
       z-index: 2;
     }
     .dept {
       position: absolute;
       z-index: 6;
-      min-width: 150px;
-      max-width: 260px;
-      padding: 10px 14px;
-      border-radius: 12px;
-      border: 2px solid rgba(255,255,255,.75);
-      background: rgba(255,255,255,.72);
-      box-shadow: 0 8px 22px rgba(20, 40, 70, .22);
-      text-align: center;
+      min-width: 156px;
+      max-width: 300px;
+      padding: 10px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.6);
+      background: rgba(255,255,255,.25);
+      box-shadow: 0 4px 24px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      text-align: left;
+      white-space: nowrap;
+      transform: translate(-50%, -50%);
+    }
+    .climber {
+      display: inline-block;
+      width: 34px;
+      height: 44px;
+      margin-right: 10px;
+      vertical-align: middle;
+      color: inherit;
+    }
+    .climber img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
     .dept-name {
-      display: block;
-      font-size: 22px;
-      font-weight: 800;
+      display: inline-block;
+      font-size: 18px;
+      font-weight: 700;
       white-space: nowrap;
+      vertical-align: middle;
     }
     .dept-count {
-      display: block;
-      margin-top: 4px;
-      font-size: 32px;
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 18px;
       line-height: 1;
-      font-weight: 900;
-      color: #a32f22;
+      font-weight: 800;
+      vertical-align: middle;
     }
     .dept-unit {
-      font-size: 18px;
-      color: #333;
-      margin-left: 4px;
+      font-size: 14px;
+      margin-left: 5px;
+      padding: 2px 6px;
+      border-radius: 6px;
     }
     .module {
       position: absolute;
       z-index: 4;
-      background: rgba(255,255,255,.8);
-      border: 2px solid rgba(255,255,255,.8);
-      box-shadow: 0 8px 20px rgba(20,40,70,.22);
+      border-radius: 16px;
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(255,255,255,.6);
+      box-shadow: 0 10px 40px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
       overflow: hidden;
     }
     .module-title {
@@ -112,7 +132,7 @@
       padding: 0 10px;
       font-size: 16px;
       font-weight: 700;
-      background: rgba(255,255,255,.65);
+      background: rgba(255,255,255,.55);
     }
     .module img,
     .module video {
@@ -137,10 +157,16 @@
 <body>
   <div id="app">
     <div class="bg" id="bg"></div>
+    <video class="bg-video" id="bgVideo" autoplay muted loop playsinline style="display:none"></video>
     <div class="shade"></div>
     <svg id="path" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <path d="M 6 92 C 22 78, 33 71, 42 60 S 58 37, 72 25 S 86 14, 96 5"
-        fill="none" stroke="#1e3a5f" stroke-width=".7" stroke-dasharray="3 3"
+      <defs>
+        <filter id="path-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1" stdDeviation="0.5" flood-opacity="0.3"></feDropShadow>
+        </filter>
+      </defs>
+      <path id="pathLine" d=""
+        fill="none" stroke="#1e3a5f" stroke-width=".35" stroke-dasharray="1.2 .8"
         stroke-linecap="round"></path>
     </svg>
     <div class="title">
@@ -179,13 +205,13 @@
         var xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.setRequestHeader('apikey', ANON_KEY);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + ANON_KEY);
+        xhr.setRequestHeader('Accept', 'application/json');
         xhr.onreadystatechange = function () {
           if (xhr.readyState !== 4) return;
           if (xhr.status >= 200 && xhr.status < 300) {
             callback(null, xhr.responseText);
           } else {
-            callback(new Error('HTTP ' + xhr.status), xhr.responseText);
+            callback(new Error('HTTP ' + xhr.status + ' ' + (xhr.responseText || '')), xhr.responseText);
           }
         };
         xhr.onerror = function () {
@@ -202,6 +228,45 @@
         return data;
       }
 
+      function numberValue(value, fallback) {
+        var n = Number(value);
+        return isNaN(n) ? fallback : n;
+      }
+
+      function pathD(departments) {
+        if (!departments || departments.length < 2) return '';
+        var i;
+        var d = 'M ' + numberValue(departments[0].position && departments[0].position.x, 0)
+          + ' ' + numberValue(departments[0].position && departments[0].position.y, 0);
+        for (i = 1; i < departments.length; i++) {
+          var prev = departments[i - 1];
+          var curr = departments[i];
+          var px = numberValue(prev.position && prev.position.x, 0);
+          var py = numberValue(prev.position && prev.position.y, 0);
+          var cx = numberValue(curr.position && curr.position.x, 0);
+          var cy = numberValue(curr.position && curr.position.y, 0);
+          var midX = (px + cx) / 2;
+          var midY = (py + cy) / 2;
+          d += ' Q ' + midX + ' ' + (midY - 2) + ' ' + cx + ' ' + cy;
+        }
+        return d;
+      }
+
+      function pathDash(style) {
+        if (style === 'solid' || style === 'arrow') return '';
+        if (style === 'dots') return '.2 .6';
+        if (style === 'wave') return '.6 .4 .1 .4';
+        if (style === 'footprint') return '.3 .9';
+        return '1.2 .8';
+      }
+
+      function climberHtml(d) {
+        if (d.climberImage) {
+          return '<span class="climber"><img src="' + esc(d.climberImage) + '" alt=""></span>';
+        }
+        return '<span class="climber"><svg viewBox="0 0 24 32" fill="currentColor" width="34" height="44"><path d="M12 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm-5 9a2 2 0 0 1 1.8-2h6.4a2 2 0 0 1 1.9 2.6L16 18h-2l-.5-2h-3L10 18H8l-1.1-4.4A2 2 0 0 1 7 11Zm-2 13a1 1 0 0 1-1-1v-5a1 1 0 0 1 2 0v3.2l1.2-1.6 2.6-3.6 1.4 1.4-2 2.6-1.8 2.4.2 1.6H5Zm14 0h-3.6l.2-1.6-1.8-2.4-2-2.6 1.4-1.4 2.6 3.6 1.2 1.6V18a1 1 0 1 1 2 0v5a1 1 0 0 1-1 1Z"></path><path d="M3 28a1 1 0 0 1-.2-1.4l8-10a1 1 0 0 1 1.4.2l.2.2a1 1 0 0 1-.2 1.4l-8 10A1 1 0 0 1 3 28Zm18 0a1 1 0 0 1-.8-1.6l-7-9a1 1 0 1 1 1.4-1.4l7 9A1 1 0 0 1 21 28Z"></path></svg></span>';
+      }
+
       function render(data) {
         data = normalizeData(data);
         var theme = data.theme;
@@ -209,7 +274,17 @@
         var modules = data.floatModules || [];
         var i;
 
-        byId('bg').style.backgroundImage = 'url("' + esc(theme.backgroundImage || fallbackBg) + '")';
+        var bgVideo = byId('bgVideo');
+        if (theme.backgroundVideo) {
+          byId('bg').style.display = 'none';
+          bgVideo.style.display = 'block';
+          if (bgVideo.getAttribute('src') !== theme.backgroundVideo) bgVideo.setAttribute('src', theme.backgroundVideo);
+          try { bgVideo.play(); } catch (e) {}
+        } else {
+          bgVideo.style.display = 'none';
+          byId('bg').style.display = 'block';
+          byId('bg').style.backgroundImage = 'url("' + esc(theme.backgroundImage || fallbackBg) + '")';
+        }
         byId('mainTitle').innerHTML = esc(theme.mainTitle || 'CI Ranking');
         byId('subTitle').innerHTML = esc(theme.subTitle || '');
         byId('mainTitle').style.color = theme.mainTitleColor || '#17324f';
@@ -221,13 +296,24 @@
           });
         }
 
+        var pathLine = byId('pathLine');
+        pathLine.setAttribute('d', pathD(departments));
+        pathLine.setAttribute('stroke', theme.pathColor || '#1e3a5f');
+        pathLine.setAttribute('stroke-width', String(numberValue(theme.pathWidth, .35)));
+        pathLine.setAttribute('stroke-dasharray', pathDash(theme.pathStyle));
+        pathLine.setAttribute('filter', 'url(#path-shadow)');
+
         var deptHtml = '';
         for (i = 0; i < departments.length; i++) {
           var d = departments[i];
           var x = d.position && typeof d.position.x === 'number' ? d.position.x : (20 + i * 10);
           var y = d.position && typeof d.position.y === 'number' ? d.position.y : (25 + i * 9);
-          deptHtml += '<div class="dept" style="left:' + x + '%;top:' + y + '%;">'
-            + '<span class="dept-name">' + esc(d.name) + '</span>'
+          deptHtml += '<div class="dept" style="left:' + x + '%;top:' + y + '%;'
+            + 'background-color:' + esc(theme.labelBgColor || 'rgba(255,255,255,.25)') + ';'
+            + 'border-color:' + (theme.labelShowBorder === false ? 'transparent' : esc(theme.labelBorderColor || 'rgba(255,255,255,.6)')) + ';'
+            + 'color:' + esc(theme.labelTextColor || '#1e3a5f') + ';">'
+            + climberHtml(d)
+            + '<span class="dept-name">' + esc(d.name) + '</span><span style="opacity:.55">:</span>'
             + '<span class="dept-count">' + esc(d.count) + '<span class="dept-unit">' + esc(d.unit || '件') + '</span></span>'
             + '</div>';
         }
@@ -241,7 +327,9 @@
           var top = m.position ? Number(m.position.y) || 0 : 0;
           var width = m.size ? Number(m.size.width) || 280 : 280;
           var height = m.size ? Number(m.size.height) || 180 : 180;
-          moduleHtml += '<div class="module" style="left:' + left + 'px;top:' + top + 'px;width:' + width + 'px;height:' + height + 'px;">'
+          moduleHtml += '<div class="module" style="left:' + left + 'px;top:' + top + 'px;width:' + width + 'px;height:' + height + 'px;'
+            + 'background-color:' + esc(theme.floatBgColor || 'rgba(255,255,255,.75)') + ';'
+            + 'border-color:' + esc(theme.floatBorderColor || 'rgba(255,255,255,.6)') + ';">'
             + '<div class="module-title">' + esc(m.title || '') + '</div>';
           if (m.type === 'video') {
             moduleHtml += '<video src="' + esc(m.contentUrl) + '" autoplay muted loop playsinline></video>';
@@ -255,8 +343,7 @@
       }
 
       function load() {
-        var url = SUPABASE_URL + '/rest/v1/dashboard_pages?id=eq.' + encodeURIComponent(BOARD_ID)
-          + '&select=data&limit=1&_=' + new Date().getTime();
+        var url = SUPABASE_URL + '/rest/v1/dashboard_pages?select=data&id=eq.headquarters-suggestions&limit=1&ts=' + new Date().getTime();
         get(url, function (err, text) {
           if (err) {
             setStatus('云端数据读取失败：' + err.message);
