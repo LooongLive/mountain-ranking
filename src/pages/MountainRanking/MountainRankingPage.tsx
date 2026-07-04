@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { MountainRankingProvider, useMountainRanking } from '@/context/MountainRankingContext';
 import BackgroundLayer from './components/BackgroundLayer';
 import RankingLabel from './components/RankingLabel';
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 function MountainRankingCanvas() {
   const { sortedDepartments, floatModules, isManualMode, resetToAutoRanking, departments, isEditMode, isLoadingCloud, theme } = useMountainRanking();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [isMobileLandscape, setIsMobileLandscape] = useState(false);
 
   useEffect(() => {
     if (isManualMode) return;
@@ -21,8 +22,38 @@ function MountainRankingCanvas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [departments.length, isManualMode]);
 
+  useEffect(() => {
+    const detectMobileLandscape = () => {
+      const viewport = window.visualViewport;
+      const width = viewport?.width ?? window.innerWidth;
+      const height = viewport?.height ?? window.innerHeight;
+      const hasTouch = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+      const isShortLandscape = width > height && height <= 720;
+      setIsMobileLandscape(isShortLandscape && hasTouch);
+    };
+
+    detectMobileLandscape();
+    const updateSoon = () => window.setTimeout(detectMobileLandscape, 80);
+    window.addEventListener('resize', updateSoon);
+    window.addEventListener('orientationchange', updateSoon);
+    window.visualViewport?.addEventListener('resize', updateSoon);
+
+    return () => {
+      window.removeEventListener('resize', updateSoon);
+      window.removeEventListener('orientationchange', updateSoon);
+      window.visualViewport?.removeEventListener('resize', updateSoon);
+    };
+  }, []);
+
   return (
-    <div ref={canvasRef} className={cn('mountain-dashboard relative w-full h-screen overflow-hidden bg-background', isEditMode ? 'is-editing' : 'is-preview')}>
+    <div
+      ref={canvasRef}
+      className={cn(
+        'mountain-dashboard relative w-full h-screen overflow-hidden bg-background',
+        isEditMode ? 'is-editing' : 'is-preview',
+        isMobileLandscape && 'is-mobile-landscape',
+      )}
+    >
       <BackgroundLayer />
       <TitleHeader />
       <DashedPathLayer />
