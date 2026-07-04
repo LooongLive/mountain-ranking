@@ -320,3 +320,85 @@ body,
     object-fit: contain;
   }
 }
+
+@media (orientation: landscape) and (max-height: 560px) and (pointer: coarse) {
+  html,
+  body,
+  #root {
+    height: 100%;
+    min-height: 100%;
+    overflow: hidden;
+  }
+
+  .mountain-dashboard.is-preview {
+    height: 100svh;
+    min-height: 100svh;
+    overflow: hidden;
+  }
+
+  .mountain-dashboard.is-preview .mobile-dashboard {
+    display: none !important;
+  }
+
+  .mountain-dashboard.is-preview > .absolute.top-0.left-0.right-0 {
+    padding-top: 8px !important;
+  }
+
+  .mountain-dashboard.is-preview > .absolute.top-0.left-0.right-0 > div {
+    max-width: 76vw !important;
+    padding-inline: 12px !important;
+  }
+
+  .mountain-dashboard.is-preview > .absolute.top-0.left-0.right-0 h1 {
+    font-size: clamp(22px, 4.2vw, 34px) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap;
+  }
+
+  .mountain-dashboard.is-preview > .absolute.top-0.left-0.right-0 p {
+    margin-top: 3px !important;
+    font-size: clamp(11px, 2vw, 15px) !important;
+    line-height: 1.15 !important;
+    white-space: nowrap;
+  }
+
+  .mountain-dashboard.is-preview .desktop-dashboard-layer > .absolute.z-20.select-none {
+    transform: translate(-50%, -50%) scale(0.62) !important;
+    transform-origin: center !important;
+  }
+
+  .mountain-dashboard.is-preview .desktop-dashboard-layer > .absolute.z-20.select-none > div:last-of-type {
+    border-radius: 14px !important;
+    gap: 10px !important;
+    padding: 8px 12px !important;
+  }
+
+  .mountain-dashboard.is-preview .desktop-dashboard-layer > .absolute.z-20.select-none .w-10.h-12 {
+    width: 34px !important;
+    height: 40px !important;
+  }
+
+  .mountain-dashboard.is-preview .desktop-dashboard-layer > .absolute.z-30.flex.flex-col {
+    transform: scale(0.62);
+    transform-origin: top left;
+    border-radius: 12px !important;
+  }
+
+  .mountain-dashboard.is-preview .desktop-dashboard-layer > .absolute.z-30.flex.flex-col video,
+  .mountain-dashboard.is-preview .desktop-dashboard-layer > .absolute.z-30.flex.flex-col img {
+    max-height: 44svh;
+  }
+
+  .mountain-dashboard.is-preview .dashboard-toolbar {
+    top: 8px;
+    right: 8px;
+    transform: scale(0.82);
+    transform-origin: top right;
+  }
+
+  .mountain-dashboard.is-preview .dashboard-toolbar button {
+    min-height: 34px;
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+}
