@@ -99,7 +99,7 @@ body,
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767px) and (orientation: portrait) {
   html,
   body,
   #root {
