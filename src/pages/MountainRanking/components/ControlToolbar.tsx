@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus, Image as ImageIcon, Video, Settings, Eye, Edit3, RotateCcw, Move, TrendingUp, Type, Route, Save, LockKeyhole, LogOut } from 'lucide-react';
+import { Plus, Image as ImageIcon, Video, Settings, Eye, Edit3, RotateCcw, Move, TrendingUp, Type, Route, Save, LockKeyhole, LogOut, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,17 +10,19 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { useMountainRanking } from '@/context/MountainRankingContext';
+import { exportDashboardImage } from '@/lib/exportDashboardImage';
 
 export default function ControlToolbar() {
   const { isEditMode, isEditAuthorized, isManualMode, setIsEditMode, setIsManualMode, unlockEditing, lockEditing,
     saveToCloud, uploadFile, saveStatus, cloudMessage, addDepartment, addFloatModule, resetToAutoRanking,
-    resetAll, theme, setTheme } = useMountainRanking();
+    resetAll, theme, setTheme, sortedDepartments, floatModules } = useMountainRanking();
 
   const bgInputRef = useRef<HTMLInputElement>(null);
   const bgVideoInputRef = useRef<HTMLInputElement>(null);
   const [password, setPassword] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,6 +68,21 @@ export default function ControlToolbar() {
       await saveToCloud();
     } catch {
       // message is already shown in the toolbar
+    }
+  };
+
+  const handleExportImage = async () => {
+    setIsExporting(true);
+    try {
+      await exportDashboardImage({
+        departments: sortedDepartments,
+        floatModules,
+        theme,
+      });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '4K 截图生成失败');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -166,6 +183,17 @@ export default function ControlToolbar() {
               </DropdownMenuItem>
               <input ref={bgInputRef} type="file" accept="image/png,image/jpeg,image/gif" className="hidden" onChange={handleBgUpload} />
               <input ref={bgVideoInputRef} type="file" accept="video/*" className="hidden" onChange={handleBgVideoUpload} />
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>备用输出</DropdownMenuLabel>
+              <DropdownMenuItem
+                disabled={isExporting}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleExportImage();
+                }}
+              >
+                <Camera className="mr-2 h-4 w-4" />{isExporting ? '正在生成 4K 截图' : '生成 4K 截图'}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>样式设置</DropdownMenuLabel>
               <Dialog>
