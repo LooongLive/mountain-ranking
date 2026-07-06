@@ -45,6 +45,10 @@ export interface IThemeConfig {
   pathStyle: PathStyle;
   pathColor: string;
   pathWidth: number;
+  pathGlowEnabled: boolean;
+  pathGlowColor: string;
+  pathGlowDuration: number;
+  pathGlowInterval: number;
   labelBgColor: string;
   labelBorderColor: string;
   labelTextColor: string;

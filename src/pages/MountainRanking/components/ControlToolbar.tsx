@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus, Image as ImageIcon, Video, Settings, Eye, Edit3, RotateCcw, Move, TrendingUp, Type, Route, Save, LockKeyhole, LogOut, Camera } from 'lucide-react';
+import { Plus, Image as ImageIcon, Video, Settings, Eye, Edit3, RotateCcw, Move, TrendingUp, Type, Route, Save, LockKeyhole, LogOut, Camera, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -245,6 +245,50 @@ export default function ControlToolbar() {
                       </div>
                       <Slider value={[theme.pathWidth]} min={0.1} max={1.5} step={0.05}
                         onValueChange={([v]) => setTheme((prev) => ({ ...prev, pathWidth: v }))} />
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Sparkles className="mr-2 h-4 w-4" />攀登流光设置
+                  </DropdownMenuItem>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader><DialogTitle>攀登流光设置</DialogTitle></DialogHeader>
+                  <div className="space-y-5 py-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">启用流光</Label>
+                      <Switch checked={theme.pathGlowEnabled}
+                        onCheckedChange={(checked) => setTheme((prev) => ({ ...prev, pathGlowEnabled: checked }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>流光颜色</Label>
+                      <div className="flex items-center gap-2">
+                        <input type="color" value={theme.pathGlowColor}
+                          onChange={(e) => setTheme((prev) => ({ ...prev, pathGlowColor: e.target.value }))}
+                          className="h-9 w-12 cursor-pointer rounded-md border border-border" />
+                        <Input type="text" value={theme.pathGlowColor}
+                          onChange={(e) => setTheme((prev) => ({ ...prev, pathGlowColor: e.target.value }))}
+                          className="h-9 text-xs font-mono flex-1" />
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>行进速度</Label>
+                        <span className="text-xs text-muted-foreground tabular-nums">{theme.pathGlowDuration}s</span>
+                      </div>
+                      <Slider value={[theme.pathGlowDuration]} min={4} max={30} step={1}
+                        onValueChange={([v]) => setTheme((prev) => ({ ...prev, pathGlowDuration: v }))} />
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label>再次出现间隔</Label>
+                        <span className="text-xs text-muted-foreground tabular-nums">{theme.pathGlowInterval}s</span>
+                      </div>
+                      <Slider value={[theme.pathGlowInterval]} min={0} max={60} step={1}
+                        onValueChange={([v]) => setTheme((prev) => ({ ...prev, pathGlowInterval: v }))} />
                     </div>
                   </div>
                 </DialogContent>

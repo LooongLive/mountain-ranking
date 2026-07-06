@@ -3,6 +3,7 @@ import { MountainRankingProvider, useMountainRanking } from '@/context/MountainR
 import BackgroundLayer from './components/BackgroundLayer';
 import RankingLabel from './components/RankingLabel';
 import DashedPathLayer from './components/DashedPathLayer';
+import PathMeteorLayer from './components/PathMeteorLayer';
 import TitleHeader from './components/TitleHeader';
 import FloatModule from './components/FloatModule';
 import ControlToolbar from './components/ControlToolbar';
@@ -57,6 +58,7 @@ function MountainRankingCanvas() {
       <BackgroundLayer />
       <TitleHeader />
       <DashedPathLayer />
+      <PathMeteorLayer />
       {isLoadingCloud && (
         <div className="absolute left-1/2 top-4 z-40 -translate-x-1/2 rounded-md bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
           正在加载云端数据...
