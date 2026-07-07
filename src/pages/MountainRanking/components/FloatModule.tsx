@@ -151,7 +151,9 @@ export default function FloatModule({ module }: FloatModuleProps) {
     top: module.position.y,
     width: module.size.width,
     height: module.minimized ? undefined : isTicker ? undefined : module.size.height,
-    backgroundColor: theme.floatBgColor,
+    background: isTicker
+      ? 'linear-gradient(135deg, rgba(255,255,255,0.58), rgba(255,255,255,0.22) 46%, rgba(255,255,255,0.38))'
+      : theme.floatBgColor,
     borderColor: theme.floatBorderColor,
     borderWidth: '1px',
     borderStyle: 'solid',
