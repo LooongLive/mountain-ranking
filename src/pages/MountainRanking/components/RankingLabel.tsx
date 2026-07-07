@@ -138,7 +138,7 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
   return (
     <div
       ref={labelRef}
-      className={cn('absolute z-20 select-none', isEditMode && isManualMode && 'cursor-grab active:cursor-grabbing', isDragging && 'opacity-80')}
+      className={cn('ranking-label absolute z-20 select-none', isEditMode && isManualMode && 'cursor-grab active:cursor-grabbing', isDragging && 'opacity-80')}
       style={style}
       onMouseDown={onDragStart}
     >
@@ -163,7 +163,7 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
 
       <div
         className={cn(
-          'relative flex items-center gap-3 px-4 py-2.5 rounded-2xl backdrop-blur-xl',
+          'ranking-card relative flex items-center gap-3 px-4 py-2.5 rounded-2xl backdrop-blur-xl',
           isEditMode && 'hover:shadow-[0_8px_32px_rgba(0_0_0_0.12),0_2px_4px_rgba(0_0_0_0.06)] hover:-translate-y-0.5 transition-all duration-300 ease-out',
         )}
         style={{

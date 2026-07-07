@@ -13,6 +13,7 @@ function MountainRankingCanvas() {
   const { sortedDepartments, floatModules, isManualMode, resetToAutoRanking, departments, isEditMode, isLoadingCloud, theme } = useMountainRanking();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isMobileLandscape, setIsMobileLandscape] = useState(false);
+  const [isTvDisplay, setIsTvDisplay] = useState(false);
 
   useEffect(() => {
     if (isManualMode) return;
@@ -46,6 +47,30 @@ function MountainRankingCanvas() {
     };
   }, []);
 
+  useEffect(() => {
+    const detectTvDisplay = () => {
+      const viewport = window.visualViewport;
+      const width = viewport?.width ?? window.innerWidth;
+      const height = viewport?.height ?? window.innerHeight;
+      const ua = navigator.userAgent || '';
+      const isAndroidTv = /Android/i.test(ua) && !/Mobile/i.test(ua);
+      const isTvUa = /(TV|TCL|MiTV|MiBOX|BRAVIA|SmartTV|HbbTV|Web0S|NetCast|Hisense|AFT|AppleTV)/i.test(ua);
+      setIsTvDisplay(width >= 960 && height >= 520 && (isAndroidTv || isTvUa));
+    };
+
+    detectTvDisplay();
+    const updateSoon = () => window.setTimeout(detectTvDisplay, 80);
+    window.addEventListener('resize', updateSoon);
+    window.addEventListener('orientationchange', updateSoon);
+    window.visualViewport?.addEventListener('resize', updateSoon);
+
+    return () => {
+      window.removeEventListener('resize', updateSoon);
+      window.removeEventListener('orientationchange', updateSoon);
+      window.visualViewport?.removeEventListener('resize', updateSoon);
+    };
+  }, []);
+
   return (
     <div
       ref={canvasRef}
@@ -53,6 +78,7 @@ function MountainRankingCanvas() {
         'mountain-dashboard relative w-full h-screen overflow-hidden bg-background',
         isEditMode ? 'is-editing' : 'is-preview',
         isMobileLandscape && 'is-mobile-landscape',
+        isTvDisplay && 'is-tv-display',
       )}
     >
       <BackgroundLayer />

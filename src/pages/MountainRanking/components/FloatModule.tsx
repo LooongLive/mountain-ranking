@@ -109,7 +109,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
   return (
     <div
       className={cn(
-        'absolute z-30 flex flex-col rounded-2xl backdrop-blur-xl shadow-[0_10px_40px_rgba(0_0_0_0.12),0_2px_8px_rgba(0_0_0_0.06)] overflow-hidden',
+        'float-module absolute z-30 flex flex-col rounded-2xl backdrop-blur-xl shadow-[0_10px_40px_rgba(0_0_0_0.12),0_2px_8px_rgba(0_0_0_0.06)] overflow-hidden',
         isEditMode && !module.minimized && 'cursor-grab active:cursor-grabbing',
         (isDragging || isResizing) && 'opacity-90 shadow-[0_20px_60px_rgba(0_0_0_0.18),0_4px_12px_rgba(0_0_0_0.08)]',
       )}

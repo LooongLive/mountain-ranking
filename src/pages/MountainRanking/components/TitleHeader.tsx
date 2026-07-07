@@ -48,7 +48,7 @@ export default function TitleHeader() {
   };
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-30 pt-6 md:pt-10 pointer-events-none">
+    <div className="title-header-layer absolute top-0 left-0 right-0 z-30 pt-6 md:pt-10 pointer-events-none">
       <div className="relative mx-auto max-w-5xl px-6 text-center pointer-events-auto">
         <div className="relative inline-block">
           {editingMain ? (
