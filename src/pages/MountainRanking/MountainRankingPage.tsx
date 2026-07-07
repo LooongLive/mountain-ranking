@@ -71,6 +71,14 @@ function MountainRankingCanvas() {
     };
   }, []);
 
+  const baseCardScale = isTvDisplay
+    ? (isEditMode ? 0.76 : 1.58)
+    : 1;
+  const dashboardStyle = {
+    '--ranking-card-scale': String(baseCardScale * (theme.labelScale ?? 1)),
+    '--ranking-font-scale': String(theme.labelFontScale ?? 1),
+  } as React.CSSProperties;
+
   return (
     <div
       ref={canvasRef}
@@ -80,6 +88,7 @@ function MountainRankingCanvas() {
         isMobileLandscape && 'is-mobile-landscape',
         isTvDisplay && 'is-tv-display',
       )}
+      style={dashboardStyle}
     >
       <BackgroundLayer />
       <TitleHeader />
@@ -135,9 +144,9 @@ function MountainRankingCanvas() {
             ))}
           </section>
 
-          {floatModules.some((mod) => !mod.minimized && mod.contentUrl) && (
+          {floatModules.some((mod) => !mod.minimized && (mod.contentUrl || mod.type === 'ticker')) && (
             <section className="landscape-dashboard__media-grid">
-              {floatModules.filter((mod) => !mod.minimized && mod.contentUrl).slice(0, 2).map((mod) => (
+              {floatModules.filter((mod) => !mod.minimized && (mod.contentUrl || mod.type === 'ticker')).slice(0, 2).map((mod) => (
                 <article
                   key={mod.id}
                   className="landscape-dashboard__media-card"
@@ -146,7 +155,13 @@ function MountainRankingCanvas() {
                     borderColor: theme.floatBorderColor,
                   }}
                 >
-                  {mod.type === 'image' ? (
+                  {mod.type === 'ticker' ? (
+                    <div className="landscape-dashboard__ticker">
+                      {(mod.scrollItems ?? []).slice(0, mod.visibleRows ?? 2).map((item) => (
+                        <div key={item.id}><strong>{item.name}</strong><span>{item.content}</span></div>
+                      ))}
+                    </div>
+                  ) : mod.type === 'image' ? (
                     <img src={mod.contentUrl} alt={mod.title} />
                   ) : (
                     <video src={mod.contentUrl} autoPlay loop muted playsInline preload="auto" />
@@ -216,7 +231,13 @@ function MountainRankingCanvas() {
                 >
                   <h2>{mod.title}</h2>
                   <div className="mobile-dashboard__media">
-                    {mod.contentUrl ? (
+                    {mod.type === 'ticker' ? (
+                      <div className="mobile-dashboard__ticker">
+                        {(mod.scrollItems ?? []).slice(0, mod.visibleRows ?? 2).map((item) => (
+                          <div key={item.id}><strong>{item.name}</strong><span>{item.content}</span></div>
+                        ))}
+                      </div>
+                    ) : mod.contentUrl ? (
                       mod.type === 'image' ? (
                         <img src={mod.contentUrl} alt={mod.title} />
                       ) : (

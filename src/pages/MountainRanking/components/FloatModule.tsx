@@ -1,13 +1,34 @@
-import { useRef, useState, type MouseEvent } from 'react';
-import { X, Minus, Image as ImageIcon, Video, Upload, RotateCw } from 'lucide-react';
+import { useMemo, useRef, useState, type MouseEvent } from 'react';
+import {
+  X,
+  Minus,
+  Image as ImageIcon,
+  Video,
+  Upload,
+  RotateCw,
+  MessageSquareText,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import type { IFloatModule } from '@/types/mountain-ranking';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { cn, generateId } from '@/lib/utils';
+import type { IFloatModule, IModuleShadow, IScrollItem } from '@/types/mountain-ranking';
 import { useMountainRanking } from '@/context/MountainRankingContext';
 
 interface FloatModuleProps {
   module: IFloatModule;
   canvasRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const DEFAULT_SHADOW: IModuleShadow = { x: 0, y: 16, blur: 36, opacity: 0.24 };
+
+function getModuleIcon(type: IFloatModule['type']) {
+  if (type === 'image') return <ImageIcon className="w-4 h-4 text-primary shrink-0" />;
+  if (type === 'video') return <Video className="w-4 h-4 text-primary shrink-0" />;
+  return <MessageSquareText className="w-4 h-4 text-primary shrink-0" />;
 }
 
 export default function FloatModule({ module }: FloatModuleProps) {
@@ -18,6 +39,16 @@ export default function FloatModule({ module }: FloatModuleProps) {
   const dragStartRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const resizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
 
+  const moduleShadow = module.shadow ?? DEFAULT_SHADOW;
+  const isTicker = module.type === 'ticker';
+  const visibleRows = Math.max(1, Math.min(8, module.visibleRows ?? 2));
+  const scrollItems = module.scrollItems ?? [];
+  const shouldScroll = scrollItems.length > visibleRows && scrollItems.length > 2;
+  const tickerRows = useMemo(
+    () => (shouldScroll ? [...scrollItems, ...scrollItems] : scrollItems),
+    [scrollItems, shouldScroll],
+  );
+
   const handleOrientationToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleFloatOrientation(module.id);
@@ -26,7 +57,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
   const handleDragStart = (e: MouseEvent<HTMLDivElement>) => {
     if (!isEditMode || module.minimized) return;
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('video') || target.closest('input') || target.closest('[data-resize-handle]')) return;
+    if (target.closest('button') || target.closest('video') || target.closest('input') || target.closest('[data-resize-handle]') || target.closest('[data-module-editor]')) return;
     e.stopPropagation(); e.preventDefault();
     setIsDragging(true);
     dragStartRef.current = { x: e.clientX, y: e.clientY, px: module.position.x, py: module.position.y };
@@ -64,8 +95,8 @@ export default function FloatModule({ module }: FloatModuleProps) {
       if (!resizeStartRef.current) return;
       const dx = ev.clientX - resizeStartRef.current.x;
       const dy = ev.clientY - resizeStartRef.current.y;
-      const newWidth = Math.max(120, resizeStartRef.current.width + dx);
-      const newHeight = Math.max(80, resizeStartRef.current.height + dy);
+      const newWidth = Math.max(160, resizeStartRef.current.width + dx);
+      const newHeight = Math.max(96, resizeStartRef.current.height + dy);
       updateFloatModule(module.id, {
         size: { width: Math.round(newWidth), height: Math.round(newHeight) },
       });
@@ -82,7 +113,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || isTicker) return;
     try {
       const url = await uploadFile(file, module.type === 'image' ? 'modules/images' : 'modules/videos');
       updateFloatModule(module.id, { contentUrl: url });
@@ -92,6 +123,26 @@ export default function FloatModule({ module }: FloatModuleProps) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const updateShadow = (patch: Partial<IModuleShadow>) => {
+    updateFloatModule(module.id, { shadow: { ...moduleShadow, ...patch } });
+  };
+
+  const updateTickerItem = (itemId: string, patch: Partial<IScrollItem>) => {
+    updateFloatModule(module.id, {
+      scrollItems: scrollItems.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
+    });
+  };
+
+  const addTickerItem = () => {
+    updateFloatModule(module.id, {
+      scrollItems: [...scrollItems, { id: generateId('msg'), name: '姓名', content: '改善内容' }],
+    });
+  };
+
+  const removeTickerItem = (itemId: string) => {
+    updateFloatModule(module.id, { scrollItems: scrollItems.filter((item) => item.id !== itemId) });
+  };
+
   const toggleMinimize = (e: React.MouseEvent) => { e.stopPropagation(); updateFloatModule(module.id, { minimized: !module.minimized }); };
   const handleClose = (e: React.MouseEvent) => { e.stopPropagation(); removeFloatModule(module.id); };
 
@@ -99,26 +150,33 @@ export default function FloatModule({ module }: FloatModuleProps) {
     left: module.position.x,
     top: module.position.y,
     width: module.size.width,
-    height: module.minimized ? undefined : module.size.height,
+    height: module.minimized ? undefined : isTicker ? undefined : module.size.height,
     backgroundColor: theme.floatBgColor,
     borderColor: theme.floatBorderColor,
     borderWidth: '1px',
     borderStyle: 'solid',
+    boxShadow: `${moduleShadow.x}px ${moduleShadow.y}px ${moduleShadow.blur}px rgba(0, 0, 0, ${moduleShadow.opacity})`,
   };
+
+  const tickerStyle = {
+    '--ticker-visible-rows': visibleRows,
+    '--ticker-duration': `${Math.max(8, scrollItems.length * 3.2)}s`,
+  } as React.CSSProperties;
 
   return (
     <div
       className={cn(
-        'float-module absolute z-30 flex flex-col rounded-2xl backdrop-blur-xl shadow-[0_10px_40px_rgba(0_0_0_0.12),0_2px_8px_rgba(0_0_0_0.06)] overflow-hidden',
+        'float-module absolute z-30 flex flex-col rounded-2xl backdrop-blur-xl overflow-hidden',
+        isTicker && 'float-module--ticker',
         isEditMode && !module.minimized && 'cursor-grab active:cursor-grabbing',
-        (isDragging || isResizing) && 'opacity-90 shadow-[0_20px_60px_rgba(0_0_0_0.18),0_4px_12px_rgba(0_0_0_0.08)]',
+        (isDragging || isResizing) && 'opacity-90',
       )}
       style={style}
       onMouseDown={handleDragStart}
     >
       {module.minimized && (
         <div className="flex items-center gap-2 px-4 py-2.5 shrink-0" style={{ backgroundColor: theme.floatBgColor }} onMouseDown={handleDragStart}>
-          {module.type === 'image' ? <ImageIcon className="w-4 h-4 text-primary shrink-0" /> : <Video className="w-4 h-4 text-primary shrink-0" />}
+          {getModuleIcon(module.type)}
           <span className="flex-1 text-sm font-medium text-foreground truncate">{module.title}</span>
           {isEditMode && (
             <div className="flex items-center gap-1 shrink-0">
@@ -134,9 +192,9 @@ export default function FloatModule({ module }: FloatModuleProps) {
       )}
 
       {!module.minimized && (
-        <div className="relative flex-1 bg-muted/30 overflow-hidden">
+        <div className={cn('relative flex-1 bg-muted/30 overflow-hidden', isTicker && 'overflow-visible')}>
           {isEditMode && (
-            <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+            <div className="absolute top-2 right-2 z-20 flex items-center gap-1">
               {module.type === 'image' && (
                 <Button type="button" size="icon" variant="secondary" className="h-7 w-7 rounded-full shadow-md bg-white/80 backdrop-blur-sm" onClick={handleOrientationToggle} title="切换横竖版">
                   <RotateCw className="w-3.5 h-3.5" />
@@ -151,7 +209,49 @@ export default function FloatModule({ module }: FloatModuleProps) {
             </div>
           )}
 
-          {module.contentUrl ? (
+          {isTicker ? (
+            <div className="ticker-module" style={tickerStyle}>
+              <div className="ticker-viewport">
+                <div className={cn('ticker-track', shouldScroll && 'is-scrolling')}>
+                  {(tickerRows.length ? tickerRows : [{ id: 'empty', name: '姓名', content: '改善内容' }]).map((item, index) => (
+                    <div className="ticker-row" key={`${item.id}-${index}`}>
+                      <strong>{item.name}</strong>
+                      <span>{item.content}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {isEditMode && (
+                <div className="ticker-editor" data-module-editor>
+                  <div className="flex items-center justify-between gap-3">
+                    <Label className="text-xs">显示条数：{visibleRows}</Label>
+                    <Slider
+                      value={[visibleRows]}
+                      min={1}
+                      max={6}
+                      step={1}
+                      onValueChange={([v]) => updateFloatModule(module.id, { visibleRows: v })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    {scrollItems.map((item) => (
+                      <div key={item.id} className="grid grid-cols-[78px_1fr_28px] gap-2">
+                        <Input value={item.name} onChange={(e) => updateTickerItem(item.id, { name: e.target.value })} placeholder="姓名" />
+                        <Input value={item.content} onChange={(e) => updateTickerItem(item.id, { content: e.target.value })} placeholder="改善内容" />
+                        <Button type="button" size="icon" variant="ghost" className="h-9 w-7 text-destructive" onClick={() => removeTickerItem(item.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button type="button" size="sm" variant="secondary" className="w-full gap-1.5" onClick={addTickerItem}>
+                    <Plus className="w-3.5 h-3.5" />新增信息
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : module.contentUrl ? (
             module.type === 'image' ? (
               <img src={module.contentUrl} alt={module.title} className="w-full h-full object-contain" />
             ) : (
@@ -179,7 +279,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
             </div>
           )}
 
-          {isEditMode && module.contentUrl && (
+          {isEditMode && !isTicker && module.contentUrl && (
             <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
               <Button type="button" size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()} className="gap-1.5 shadow-lg">
                 <Upload className="w-3.5 h-3.5" />替换
@@ -188,9 +288,24 @@ export default function FloatModule({ module }: FloatModuleProps) {
           )}
 
           {isEditMode && (
+            <div className="module-shadow-editor" data-module-editor>
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                <Label className="text-[11px]">阴影左右 {moduleShadow.x}</Label>
+                <Label className="text-[11px]">阴影上下 {moduleShadow.y}</Label>
+                <Slider value={[moduleShadow.x]} min={-60} max={60} step={1} onValueChange={([v]) => updateShadow({ x: v })} />
+                <Slider value={[moduleShadow.y]} min={-60} max={60} step={1} onValueChange={([v]) => updateShadow({ y: v })} />
+                <Label className="text-[11px]">模糊 {moduleShadow.blur}</Label>
+                <Label className="text-[11px]">深浅 {Math.round(moduleShadow.opacity * 100)}%</Label>
+                <Slider value={[moduleShadow.blur]} min={0} max={90} step={1} onValueChange={([v]) => updateShadow({ blur: v })} />
+                <Slider value={[moduleShadow.opacity]} min={0} max={0.8} step={0.02} onValueChange={([v]) => updateShadow({ opacity: v })} />
+              </div>
+            </div>
+          )}
+
+          {isEditMode && (
             <div
               data-resize-handle
-              className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize z-20 group"
+              className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize z-30 group"
               onMouseDown={handleResizeStart}
               title="拖拽调整大小"
             >
@@ -206,7 +321,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
         </div>
       )}
 
-      <input ref={fileInputRef} type="file" accept={module.type === 'image' ? 'image/png,image/jpeg,image/gif' : 'video/*'} className="hidden" onChange={handleFileChange} />
+      {!isTicker && <input ref={fileInputRef} type="file" accept={module.type === 'image' ? 'image/png,image/jpeg,image/gif' : 'video/*'} className="hidden" onChange={handleFileChange} />}
     </div>
   );
 }

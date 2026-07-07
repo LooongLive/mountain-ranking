@@ -44,6 +44,8 @@ const INITIAL_THEME: IThemeConfig = {
   pathGlowColor: '#8bdcff',
   pathGlowDuration: 12,
   pathGlowInterval: 6,
+  labelScale: 1,
+  labelFontScale: 1,
   labelBgColor: 'rgba(255, 255, 255, 0.25)',
   labelBorderColor: 'rgba(255, 255, 255, 0.6)',
   labelTextColor: '#1e3a5f',
@@ -53,8 +55,8 @@ const INITIAL_THEME: IThemeConfig = {
 };
 
 const INITIAL_FLOAT_MODULES: IFloatModule[] = [
-  { id: 'mod_1', type: 'image', title: '月度公告', contentUrl: '', position: { x: 40, y: 200 }, size: { width: 280, height: 396 }, minimized: false, orientation: 'portrait' },
-  { id: 'mod_2', type: 'video', title: '改善案例视频', contentUrl: '', position: { x: 360, y: 260 }, size: { width: 480, height: 270 }, minimized: false, orientation: 'landscape' },
+  { id: 'mod_1', type: 'image', title: '月度公告', contentUrl: '', position: { x: 40, y: 200 }, size: { width: 280, height: 396 }, minimized: false, orientation: 'portrait', shadow: { x: 0, y: 16, blur: 36, opacity: 0.24 } },
+  { id: 'mod_2', type: 'video', title: '改善案例视频', contentUrl: '', position: { x: 360, y: 260 }, size: { width: 480, height: 270 }, minimized: false, orientation: 'landscape', shadow: { x: 0, y: 16, blur: 36, opacity: 0.24 } },
 ];
 
 function loadFromStorage<T>(key: string, fallback: T): T {
@@ -103,7 +105,7 @@ interface MountainRankingContextValue {
   addAvatar: (deptId: string, imageUrl: string) => void;
   updateAvatarPosition: (deptId: string, avatarId: string, offsetX: number, offsetY: number) => void;
   removeAvatar: (deptId: string, avatarId: string) => void;
-  addFloatModule: (type: 'image' | 'video') => void;
+  addFloatModule: (type: 'image' | 'video' | 'ticker') => void;
   removeFloatModule: (id: string) => void;
   updateFloatModule: (id: string, patch: Partial<IFloatModule>) => void;
   toggleFloatOrientation: (id: string) => void;
@@ -321,18 +323,28 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const addFloatModule = (type: 'image' | 'video') => {
+  const addFloatModule = (type: 'image' | 'video' | 'ticker') => {
     const isPortrait = type === 'image';
-    const size = isPortrait ? { width: 280, height: 396 } : { width: 480, height: 270 };
+    const size = type === 'ticker'
+      ? { width: 520, height: 168 }
+      : isPortrait ? { width: 280, height: 396 } : { width: 480, height: 270 };
     const newMod: IFloatModule = {
       id: generateId('mod'),
       type,
-      title: type === 'image' ? '图片公告' : '视频公告',
+      title: type === 'image' ? '图片公告' : type === 'video' ? '视频公告' : '改善信息滚动',
       contentUrl: '',
       position: { x: 120 + floatModules.length * 30, y: 180 + floatModules.length * 30 },
       size,
       minimized: false,
       orientation: isPortrait ? 'portrait' : 'landscape',
+      visibleRows: type === 'ticker' ? 2 : undefined,
+      scrollItems: type === 'ticker'
+        ? [
+            { id: generateId('msg'), name: '姓名', content: '改善内容' },
+            { id: generateId('msg'), name: '姓名', content: '改善内容' },
+          ]
+        : undefined,
+      shadow: { x: 0, y: 16, blur: 36, opacity: 0.24 },
     };
     setFloatModules((prev) => [...prev, newMod]);
   };

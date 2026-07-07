@@ -36,7 +36,8 @@ export default function PathMeteorLayer() {
   const fadeOutRatio = clamp(travelRatio - 0.025, 0.1, 0.94);
   const flashStart = clamp(travelRatio, 0.2, 0.96);
   const flashPeak = clamp(flashStart + 0.025, 0.22, 0.98);
-  const flashEnd = clamp(flashStart + 0.12, 0.28, 0.995);
+  const flashBreathLow = clamp(flashStart + 0.105, 0.28, 0.99);
+  const flashBreathPeak = clamp(flashStart + 0.18, 0.34, 0.995);
   const topPoint = pathPoints[pathPoints.length - 1];
   const glowColor = theme.pathGlowColor || '#8bdcff';
 
@@ -96,15 +97,15 @@ export default function PathMeteorLayer() {
         <mask id={`${svgId}-card-mask`} maskUnits="userSpaceOnUse">
           <rect x="0" y="0" width="100" height="100" fill="white" />
           {pathPoints.map((point) => {
-            const width = clamp(12 + point.name.length * 1.1, 15, 28);
+            const width = clamp(9.6 + point.name.length * 0.72, 12.6, 23.6);
             return (
               <rect
                 key={`${point.name}-${point.x}-${point.y}`}
                 x={point.x - width / 2}
-                y={point.y - 4.6}
+                y={point.y - 3.45}
                 width={width}
-                height="9.2"
-                rx="2.8"
+                height="6.9"
+                rx="2.15"
                 fill="black"
               />
             );
@@ -142,43 +143,31 @@ export default function PathMeteorLayer() {
       <g opacity="0">
         <animate
           attributeName="opacity"
-          values="0;0;1;0.36;0"
-          keyTimes={`0;${flashStart};${flashPeak};${flashEnd};1`}
+          values="0;0;0.98;0.22;0.82;0"
+          keyTimes={`0;${flashStart};${flashPeak};${flashBreathLow};${flashBreathPeak};1`}
           dur={`${cycleDuration}s`}
           repeatCount="indefinite"
         />
         <rect
-          x={topPoint.x - 13.7}
-          y={topPoint.y - 6.3}
-          width="27.4"
-          height="12.6"
-          rx="3.8"
+          x={topPoint.x - 14.2}
+          y={topPoint.y - 6.45}
+          width="28.4"
+          height="12.9"
+          rx="3.9"
           fill={`url(#${svgId}-card-fill-gradient)`}
           filter={`url(#${svgId}-card-outer-glow)`}
         />
         <rect
-          x={topPoint.x - 12.6}
-          y={topPoint.y - 5.8}
-          width="25.2"
-          height="11.6"
-          rx="3.5"
+          x={topPoint.x - 12.75}
+          y={topPoint.y - 5.85}
+          width="25.5"
+          height="11.7"
+          rx="3.45"
           fill="none"
           stroke="currentColor"
-          strokeWidth="0.52"
-          opacity="0.88"
+          strokeWidth="0.38"
+          opacity="0.48"
           filter={`url(#${svgId}-card-flash)`}
-        />
-        <rect
-          x={topPoint.x - 15.1}
-          y={topPoint.y - 7}
-          width="30.2"
-          height="14"
-          rx="4.4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="0.28"
-          opacity="0.34"
-          filter={`url(#${svgId}-card-outer-glow)`}
         />
       </g>
     </svg>

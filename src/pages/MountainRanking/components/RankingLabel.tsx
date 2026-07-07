@@ -132,7 +132,7 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
   const style: React.CSSProperties = {
     left: `${department.position.x}%`,
     top: `${department.position.y}%`,
-    transform: 'translate(-50%, -50%)',
+    transform: 'translate(-50%, -50%) scale(var(--ranking-card-scale, 1))',
   };
 
   return (

@@ -20,15 +20,31 @@ export interface IDepartment {
   climberImage?: string;
 }
 
+export interface IScrollItem {
+  id: string;
+  name: string;
+  content: string;
+}
+
+export interface IModuleShadow {
+  x: number;
+  y: number;
+  blur: number;
+  opacity: number;
+}
+
 export interface IFloatModule {
   id: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'ticker';
   title: string;
   contentUrl: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
   minimized: boolean;
   orientation: 'portrait' | 'landscape';
+  scrollItems?: IScrollItem[];
+  visibleRows?: number;
+  shadow?: IModuleShadow;
 }
 
 export type PathStyle = 'dashed' | 'footprint' | 'dots' | 'wave' | 'solid' | 'arrow';
@@ -49,6 +65,8 @@ export interface IThemeConfig {
   pathGlowColor: string;
   pathGlowDuration: number;
   pathGlowInterval: number;
+  labelScale: number;
+  labelFontScale: number;
   labelBgColor: string;
   labelBorderColor: string;
   labelTextColor: string;
