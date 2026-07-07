@@ -55,6 +55,84 @@
   font-size: calc(1rem * var(--ranking-font-scale, 1));
 }
 
+.ranking-card-shell {
+  position: relative;
+  display: inline-block;
+  border-radius: 1rem;
+  padding: 0;
+  isolation: isolate;
+}
+
+.ranking-card-shell .ranking-card {
+  position: relative;
+  z-index: 1;
+}
+
+.ranking-card-shell--flow-active {
+  overflow: hidden;
+  padding: 1px;
+  box-shadow:
+    0 0 0 1px rgba(226, 203, 255, 0.26),
+    0 0 18px rgba(226, 203, 255, 0.32),
+    0 0 44px rgba(57, 59, 178, 0.22);
+  animation: top-card-flow-breath var(--flow-border-active-duration, 3s) ease-in-out both;
+}
+
+.ranking-card-shell--flow-active::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: -70%;
+  top: -170%;
+  width: 240%;
+  height: 440%;
+  background: conic-gradient(
+    from 0deg,
+    var(--flow-border-a, #e2cbff),
+    rgba(255, 255, 255, 0.96),
+    var(--flow-border-b, #393bb2),
+    rgba(255, 255, 255, 0.94),
+    var(--flow-border-a, #e2cbff)
+  );
+  animation: top-card-flow-spin 2s linear infinite;
+}
+
+.ranking-card-shell--flow-active .ranking-card {
+  border-color: transparent !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.64),
+    0 8px 28px rgba(15, 23, 42, 0.14) !important;
+}
+
+@keyframes top-card-flow-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes top-card-flow-breath {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(226, 203, 255, 0.18),
+      0 0 12px rgba(226, 203, 255, 0.22),
+      0 0 30px rgba(57, 59, 178, 0.16);
+  }
+  22%,
+  68% {
+    box-shadow:
+      0 0 0 1px rgba(226, 203, 255, 0.46),
+      0 0 22px rgba(226, 203, 255, 0.5),
+      0 0 62px rgba(57, 59, 178, 0.36);
+  }
+  45% {
+    box-shadow:
+      0 0 0 1px rgba(226, 203, 255, 0.24),
+      0 0 15px rgba(226, 203, 255, 0.28),
+      0 0 42px rgba(57, 59, 178, 0.2);
+  }
+}
+
 .ranking-card span,
 .ranking-card input {
   font-size: calc(1em * var(--ranking-font-scale, 1));
@@ -90,8 +168,8 @@
 .float-module--ticker {
   overflow: hidden;
   border-color: rgba(255, 255, 255, 0.6) !important;
-  -webkit-backdrop-filter: blur(26px) saturate(1.35) brightness(1.08);
-  backdrop-filter: blur(26px) saturate(1.35) brightness(1.08);
+  -webkit-backdrop-filter: blur(var(--ticker-glass-blur, 26px)) saturate(1.35) brightness(1.08);
+  backdrop-filter: blur(var(--ticker-glass-blur, 26px)) saturate(1.35) brightness(1.08);
 }
 
 .float-module--ticker::before {
@@ -103,7 +181,8 @@
   background:
     radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.82), transparent 24%),
     radial-gradient(circle at 92% 18%, rgba(139, 220, 255, 0.28), transparent 30%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.08) 52%, rgba(255, 255, 255, 0.34));
+    linear-gradient(135deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.08) 52%, rgba(255, 255, 255, 0.34)),
+    var(--ticker-glass-bg, rgba(255, 255, 255, 0.32));
   opacity: 0.92;
 }
 
@@ -133,13 +212,13 @@
   border: 1px solid rgba(255, 255, 255, 0.42);
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.14)),
-    rgba(255, 255, 255, 0.18);
+    var(--ticker-glass-bg, rgba(255, 255, 255, 0.32));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.66),
     inset 0 -12px 24px rgba(255, 255, 255, 0.12),
     0 14px 34px rgba(15, 23, 42, 0.1);
-  -webkit-backdrop-filter: blur(18px) saturate(1.25);
-  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(var(--ticker-glass-blur, 26px)) saturate(1.25);
+  backdrop-filter: blur(var(--ticker-glass-blur, 26px)) saturate(1.25);
 }
 
 .ticker-track {
@@ -163,13 +242,13 @@
   border: 1px solid rgba(255, 255, 255, 0.48);
   border-radius: 12px;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.26)),
-    rgba(255, 255, 255, 0.34);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.16)),
+    var(--ticker-glass-bg, rgba(255, 255, 255, 0.32));
   box-shadow:
     0 8px 20px rgba(15, 23, 42, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(var(--ticker-glass-blur, 26px)) saturate(1.2);
+  backdrop-filter: blur(var(--ticker-glass-blur, 26px)) saturate(1.2);
 }
 
 .ticker-row strong {

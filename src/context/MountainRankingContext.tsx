@@ -44,6 +44,9 @@ const INITIAL_THEME: IThemeConfig = {
   pathGlowColor: '#8bdcff',
   pathGlowDuration: 12,
   pathGlowInterval: 6,
+  pathGlowBorderDuration: 3,
+  pathGlowBorderColorA: '#E2CBFF',
+  pathGlowBorderColorB: '#393BB2',
   labelScale: 1,
   labelFontScale: 1,
   labelBgColor: 'rgba(255, 255, 255, 0.25)',
@@ -344,6 +347,8 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
             { id: generateId('msg'), name: '姓名', content: '改善内容' },
           ]
         : undefined,
+      tickerSpeed: type === 'ticker' ? 12 : undefined,
+      glass: type === 'ticker' ? { backgroundColor: 'rgba(255, 255, 255, 0.32)', blur: 26 } : undefined,
       shadow: { x: 0, y: 16, blur: 36, opacity: 0.24 },
     };
     setFloatModules((prev) => [...prev, newMod]);

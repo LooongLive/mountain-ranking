@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { cn, generateId } from '@/lib/utils';
-import type { IFloatModule, IModuleShadow, IScrollItem } from '@/types/mountain-ranking';
+import type { IFloatModule, IModuleShadow, IScrollItem, ITickerGlass } from '@/types/mountain-ranking';
 import { useMountainRanking } from '@/context/MountainRankingContext';
 
 interface FloatModuleProps {
@@ -24,6 +24,35 @@ interface FloatModuleProps {
 }
 
 const DEFAULT_SHADOW: IModuleShadow = { x: 0, y: 16, blur: 36, opacity: 0.24 };
+const DEFAULT_TICKER_GLASS: ITickerGlass = { backgroundColor: 'rgba(255, 255, 255, 0.32)', blur: 26 };
+
+function hexToRgb(hex: string) {
+  const clean = hex.replace('#', '').trim();
+  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return { r: 255, g: 255, b: 255 };
+  return {
+    r: parseInt(clean.slice(0, 2), 16),
+    g: parseInt(clean.slice(2, 4), 16),
+    b: parseInt(clean.slice(4, 6), 16),
+  };
+}
+
+function colorToHex(color: string) {
+  if (color.startsWith('#') && color.length === 7) return color;
+  const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+  if (!match) return '#ffffff';
+  return `#${[match[1], match[2], match[3]].map((v) => Number(v).toString(16).padStart(2, '0')).join('')}`;
+}
+
+function colorToAlpha(color: string) {
+  const match = color.match(/rgba?\(\d+,\s*\d+,\s*\d+(?:,\s*([\d.]+))?\)/i);
+  if (!match) return 0.32;
+  return match[1] === undefined ? 1 : Math.max(0, Math.min(1, Number(match[1])));
+}
+
+function toRgba(hex: string, alpha: number) {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha)).toFixed(2)})`;
+}
 
 function getModuleIcon(type: IFloatModule['type']) {
   if (type === 'image') return <ImageIcon className="w-4 h-4 text-primary shrink-0" />;
@@ -43,6 +72,8 @@ export default function FloatModule({ module }: FloatModuleProps) {
   const isTicker = module.type === 'ticker';
   const visibleRows = Math.max(1, Math.min(8, module.visibleRows ?? 2));
   const scrollItems = module.scrollItems ?? [];
+  const tickerSpeed = Math.max(4, Math.min(90, module.tickerSpeed ?? 12));
+  const tickerGlass = { ...DEFAULT_TICKER_GLASS, ...(module.glass ?? {}) };
   const shouldScroll = scrollItems.length > visibleRows && scrollItems.length > 2;
   const tickerRows = useMemo(
     () => (shouldScroll ? [...scrollItems, ...scrollItems] : scrollItems),
@@ -127,6 +158,10 @@ export default function FloatModule({ module }: FloatModuleProps) {
     updateFloatModule(module.id, { shadow: { ...moduleShadow, ...patch } });
   };
 
+  const updateTickerGlass = (patch: Partial<ITickerGlass>) => {
+    updateFloatModule(module.id, { glass: { ...tickerGlass, ...patch } });
+  };
+
   const updateTickerItem = (itemId: string, patch: Partial<IScrollItem>) => {
     updateFloatModule(module.id, {
       scrollItems: scrollItems.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
@@ -152,7 +187,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
     width: module.size.width,
     height: module.minimized ? undefined : isTicker ? undefined : module.size.height,
     background: isTicker
-      ? 'linear-gradient(135deg, rgba(255,255,255,0.58), rgba(255,255,255,0.22) 46%, rgba(255,255,255,0.38))'
+      ? `linear-gradient(135deg, rgba(255,255,255,0.46), rgba(255,255,255,0.10) 46%, rgba(255,255,255,0.28)), ${tickerGlass.backgroundColor}`
       : theme.floatBgColor,
     borderColor: theme.floatBorderColor,
     borderWidth: '1px',
@@ -162,8 +197,12 @@ export default function FloatModule({ module }: FloatModuleProps) {
 
   const tickerStyle = {
     '--ticker-visible-rows': visibleRows,
-    '--ticker-duration': `${Math.max(8, scrollItems.length * 3.2)}s`,
+    '--ticker-duration': `${tickerSpeed}s`,
+    '--ticker-glass-bg': tickerGlass.backgroundColor,
+    '--ticker-glass-blur': `${tickerGlass.blur}px`,
   } as React.CSSProperties;
+  const tickerGlassHex = colorToHex(tickerGlass.backgroundColor);
+  const tickerGlassAlpha = colorToAlpha(tickerGlass.backgroundColor);
 
   return (
     <div
@@ -234,6 +273,44 @@ export default function FloatModule({ module }: FloatModuleProps) {
                       max={6}
                       step={1}
                       onValueChange={([v]) => updateFloatModule(module.id, { visibleRows: v })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <Label className="text-xs">滚动速度：{tickerSpeed}s</Label>
+                    <Slider
+                      value={[tickerSpeed]}
+                      min={4}
+                      max={60}
+                      step={1}
+                      onValueChange={([v]) => updateFloatModule(module.id, { tickerSpeed: v })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-[72px_1fr] items-center gap-2">
+                    <Label className="text-xs">玻璃颜色</Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={tickerGlassHex}
+                        onChange={(e) => updateTickerGlass({ backgroundColor: toRgba(e.target.value, tickerGlassAlpha) })}
+                        className="h-8 w-10 cursor-pointer rounded-md border border-white/50 bg-transparent"
+                      />
+                      <span className="text-[11px] text-muted-foreground tabular-nums">透明 {Math.round(tickerGlassAlpha * 100)}%</span>
+                    </div>
+                    <Label className="text-xs">透明度</Label>
+                    <Slider
+                      value={[tickerGlassAlpha]}
+                      min={0.08}
+                      max={0.85}
+                      step={0.01}
+                      onValueChange={([v]) => updateTickerGlass({ backgroundColor: toRgba(tickerGlassHex, v) })}
+                    />
+                    <Label className="text-xs">背景模糊</Label>
+                    <Slider
+                      value={[tickerGlass.blur]}
+                      min={0}
+                      max={48}
+                      step={1}
+                      onValueChange={([v]) => updateTickerGlass({ blur: v })}
                     />
                   </div>
                   <div className="space-y-2">

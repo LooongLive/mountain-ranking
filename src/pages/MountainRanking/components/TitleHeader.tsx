@@ -1,8 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Settings, Type } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useMountainRanking } from '@/context/MountainRankingContext';
 
@@ -95,66 +92,6 @@ export default function TitleHeader() {
             </p>
           )}
         </div>
-
-        {isEditMode && (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button type="button" size="sm" variant="secondary" className="gap-1.5 bg-white/80 backdrop-blur-sm border border-border/60 shadow-sm">
-                  <Settings className="h-4 w-4" />
-                  <span className="text-xs">标题样式</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-4 space-y-4 bg-white/95 backdrop-blur-md" align="end">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Type className="h-4 w-4" />主标题
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground w-12 shrink-0">颜色</label>
-                    <input type="color" value={theme.mainTitleColor}
-                      onChange={(e) => setTheme((prev) => ({ ...prev, mainTitleColor: e.target.value }))}
-                      className="h-8 w-12 rounded border border-border cursor-pointer bg-transparent" />
-                    <Input type="text" value={theme.mainTitleColor}
-                      onChange={(e) => setTheme((prev) => ({ ...prev, mainTitleColor: e.target.value }))}
-                      className="h-8 text-xs font-mono" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground w-12 shrink-0">字号</label>
-                    <input type="range" min={20} max={72} value={theme.mainTitleSize}
-                      onChange={(e) => setTheme((prev) => ({ ...prev, mainTitleSize: Number(e.target.value) }))}
-                      className="flex-1 accent-primary" />
-                    <span className="text-xs tabular-nums text-muted-foreground w-10 text-right">{theme.mainTitleSize}px</span>
-                  </div>
-                </div>
-
-                <div className="border-t border-border/60" />
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Type className="h-4 w-4" />副标题
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground w-12 shrink-0">颜色</label>
-                    <input type="color" value={theme.subTitleColor}
-                      onChange={(e) => setTheme((prev) => ({ ...prev, subTitleColor: e.target.value }))}
-                      className="h-8 w-12 rounded border border-border cursor-pointer bg-transparent" />
-                    <Input type="text" value={theme.subTitleColor}
-                      onChange={(e) => setTheme((prev) => ({ ...prev, subTitleColor: e.target.value }))}
-                      className="h-8 text-xs font-mono" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-muted-foreground w-12 shrink-0">字号</label>
-                    <input type="range" min={12} max={36} value={theme.subTitleSize}
-                      onChange={(e) => setTheme((prev) => ({ ...prev, subTitleSize: Number(e.target.value) }))}
-                      className="flex-1 accent-primary" />
-                    <span className="text-xs tabular-nums text-muted-foreground w-10 text-right">{theme.subTitleSize}px</span>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ interface RankingLabelProps {
 
 export default function RankingLabel({ department, canvasRef }: RankingLabelProps) {
   const { isEditMode, isManualMode, updateDepartment, removeDepartment, updateDepartmentPosition,
-    addAvatar, removeAvatar, updateAvatarPosition, theme, uploadFile } = useMountainRanking();
+    addAvatar, removeAvatar, updateAvatarPosition, theme, uploadFile, sortedDepartments } = useMountainRanking();
 
   const [editingName, setEditingName] = useState(false);
   const [editingCount, setEditingCount] = useState(false);
@@ -22,6 +22,7 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
   const [countValue, setCountValue] = useState(String(department.count));
   const [unitValue, setUnitValue] = useState(department.unit);
   const [isDragging, setIsDragging] = useState(false);
+  const [isFlowBorderActive, setIsFlowBorderActive] = useState(false);
   const labelRef = useRef<HTMLDivElement>(null);
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const climberFileInputRef = useRef<HTMLInputElement>(null);
@@ -31,6 +32,40 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
     setCountValue(String(department.count));
     setUnitValue(department.unit);
   }, [department.name, department.count, department.unit]);
+
+  const isTopDepartment = sortedDepartments[0]?.id === department.id;
+
+  useEffect(() => {
+    if (!isTopDepartment || !theme.pathGlowEnabled) {
+      setIsFlowBorderActive(false);
+      return;
+    }
+
+    const travelMs = Math.max(4, Math.min(40, theme.pathGlowDuration)) * 1000;
+    const intervalMs = Math.max(0, Math.min(90, theme.pathGlowInterval)) * 1000;
+    const activeMs = Math.max(1, Math.min(12, theme.pathGlowBorderDuration ?? 3)) * 1000;
+    const cycleMs = travelMs + intervalMs;
+    let startTimer: number | undefined;
+    let endTimer: number | undefined;
+
+    const run = () => {
+      window.clearTimeout(startTimer);
+      window.clearTimeout(endTimer);
+      setIsFlowBorderActive(false);
+      startTimer = window.setTimeout(() => {
+        setIsFlowBorderActive(true);
+        endTimer = window.setTimeout(() => setIsFlowBorderActive(false), activeMs);
+      }, travelMs);
+    };
+
+    run();
+    const timer = window.setInterval(run, cycleMs);
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(startTimer);
+      window.clearTimeout(endTimer);
+    };
+  }, [isTopDepartment, theme.pathGlowBorderDuration, theme.pathGlowDuration, theme.pathGlowEnabled, theme.pathGlowInterval]);
 
   const handleNameSubmit = useCallback(() => {
     const trimmed = nameValue.trim();
@@ -162,6 +197,14 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
       ))}
 
       <div
+        className={cn('ranking-card-shell', isTopDepartment && 'ranking-card-shell--top', isFlowBorderActive && 'ranking-card-shell--flow-active')}
+        style={{
+          '--flow-border-a': theme.pathGlowBorderColorA ?? '#E2CBFF',
+          '--flow-border-b': theme.pathGlowBorderColorB ?? '#393BB2',
+          '--flow-border-active-duration': `${Math.max(1, Math.min(12, theme.pathGlowBorderDuration ?? 3))}s`,
+        } as React.CSSProperties}
+      >
+        <div
         className={cn(
           'ranking-card relative flex items-center gap-3 px-4 py-2.5 rounded-2xl backdrop-blur-xl',
           isEditMode && 'hover:shadow-[0_8px_32px_rgba(0_0_0_0.12),0_2px_4px_rgba(0_0_0_0.06)] hover:-translate-y-0.5 transition-all duration-300 ease-out',
@@ -268,6 +311,7 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
             {isManualMode && <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />}
           </div>
         )}
+        </div>
       </div>
 
       <input ref={avatarFileInputRef} type="file" accept="image/png,image/jpeg,image/gif" className="hidden" onChange={handleAvatarUpload} />

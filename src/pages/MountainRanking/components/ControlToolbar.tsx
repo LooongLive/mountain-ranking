@@ -289,6 +289,31 @@ export default function ControlToolbar() {
               <div className="flex items-center justify-between"><Label>再次出现间隔</Label><span className="text-xs text-muted-foreground tabular-nums">{theme.pathGlowInterval}s</span></div>
               <Slider value={[theme.pathGlowInterval]} min={0} max={60} step={1} onValueChange={([v]) => setTheme((prev) => ({ ...prev, pathGlowInterval: v }))} />
             </div>
+            <div className="space-y-3 rounded-xl border border-white/50 bg-white/55 p-3">
+              <div className="flex items-center justify-between">
+                <Label>顶部流光边框持续</Label>
+                <span className="text-xs text-muted-foreground tabular-nums">{theme.pathGlowBorderDuration ?? 3}s</span>
+              </div>
+              <Slider
+                value={[theme.pathGlowBorderDuration ?? 3]}
+                min={1}
+                max={12}
+                step={0.5}
+                onValueChange={([v]) => setTheme((prev) => ({ ...prev, pathGlowBorderDuration: v }))}
+              />
+              <div className="grid grid-cols-[76px_1fr] items-center gap-2">
+                <Label className="text-xs">边框浅色</Label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={theme.pathGlowBorderColorA ?? '#E2CBFF'} onChange={(e) => setTheme((prev) => ({ ...prev, pathGlowBorderColorA: e.target.value }))} className="h-8 w-10 cursor-pointer rounded-md border border-border" />
+                  <Input value={theme.pathGlowBorderColorA ?? '#E2CBFF'} onChange={(e) => setTheme((prev) => ({ ...prev, pathGlowBorderColorA: e.target.value }))} className="h-8 text-xs font-mono" />
+                </div>
+                <Label className="text-xs">边框深色</Label>
+                <div className="flex items-center gap-2">
+                  <input type="color" value={theme.pathGlowBorderColorB ?? '#393BB2'} onChange={(e) => setTheme((prev) => ({ ...prev, pathGlowBorderColorB: e.target.value }))} className="h-8 w-10 cursor-pointer rounded-md border border-border" />
+                  <Input value={theme.pathGlowBorderColorB ?? '#393BB2'} onChange={(e) => setTheme((prev) => ({ ...prev, pathGlowBorderColorB: e.target.value }))} className="h-8 text-xs font-mono" />
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

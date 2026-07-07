@@ -34,11 +34,6 @@ export default function PathMeteorLayer() {
   const travelRatio = clamp(theme.pathGlowDuration / cycleDuration, 0.2, 0.96);
   const fadeInRatio = clamp(0.04 / travelRatio, 0.02, 0.08);
   const fadeOutRatio = clamp(travelRatio - 0.025, 0.1, 0.94);
-  const flashStart = clamp(travelRatio, 0.2, 0.96);
-  const flashPeak = clamp(flashStart + 0.025, 0.22, 0.98);
-  const flashBreathLow = clamp(flashStart + 0.105, 0.28, 0.99);
-  const flashBreathPeak = clamp(flashStart + 0.18, 0.34, 0.995);
-  const topPoint = pathPoints[pathPoints.length - 1];
   const glowColor = theme.pathGlowColor || '#8bdcff';
 
   return (
@@ -64,34 +59,15 @@ export default function PathMeteorLayer() {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <filter id={`${svgId}-card-flash`} x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur stdDeviation="1.8" result="softGlow" />
-          <feMerge>
-            <feMergeNode in="softGlow" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <filter id={`${svgId}-card-outer-glow`} x="-120%" y="-120%" width="340%" height="340%">
-          <feGaussianBlur stdDeviation="2.8" result="outerGlow" />
-          <feMerge>
-            <feMergeNode in="outerGlow" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
         <linearGradient id={`${svgId}-tail-gradient`} x1="0%" y1="50%" x2="100%" y2="50%">
           <stop offset="0%" stopColor="currentColor" stopOpacity="0" />
-          <stop offset="48%" stopColor="currentColor" stopOpacity="0.3" />
-          <stop offset="82%" stopColor="currentColor" stopOpacity="0.78" />
+          <stop offset="36%" stopColor="currentColor" stopOpacity="0.2" />
+          <stop offset="78%" stopColor="currentColor" stopOpacity="0.76" />
           <stop offset="100%" stopColor="#ffffff" stopOpacity="0.98" />
         </linearGradient>
         <radialGradient id={`${svgId}-head-gradient`} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
           <stop offset="38%" stopColor="currentColor" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-        </radialGradient>
-        <radialGradient id={`${svgId}-card-fill-gradient`} cx="50%" cy="50%" r="72%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
-          <stop offset="42%" stopColor="currentColor" stopOpacity="0.18" />
           <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
         <mask id={`${svgId}-card-mask`} maskUnits="userSpaceOnUse">
@@ -132,43 +108,12 @@ export default function PathMeteorLayer() {
             dur={`${cycleDuration}s`}
             repeatCount="indefinite"
           />
-          <path d="M -9.8 -0.08 C -7.4 -0.72 -3.8 -0.78 0 0 C -3.8 0.78 -7.4 0.72 -9.8 0.08 Z" fill={`url(#${svgId}-tail-gradient)`} opacity="0.92" />
-          <path d="M -7.8 0 C -5.5 -0.36 -2.3 -0.38 0 0 C -2.3 0.38 -5.5 0.36 -7.8 0 Z" fill="#ffffff" opacity="0.18" />
-          <ellipse cx="-1.35" cy="0" rx="3.6" ry="0.62" fill="currentColor" opacity="0.45" />
-          <circle r="1.55" fill={`url(#${svgId}-head-gradient)`} />
+          <path d="M -12.4 0 C -9.2 -1.24 -3.65 -1.42 0.28 -0.08 C -0.12 0.92 -2.9 1.46 -6.2 1.12 C -8.55 0.86 -10.7 0.44 -12.4 0 Z" fill={`url(#${svgId}-tail-gradient)`} opacity="0.9" />
+          <path d="M -8.7 0 C -6.3 -0.42 -2.35 -0.48 0 0 C -2.35 0.48 -6.3 0.42 -8.7 0 Z" fill="#ffffff" opacity="0.2" />
+          <ellipse cx="-1.1" cy="0" rx="4.25" ry="0.76" fill="currentColor" opacity="0.38" />
+          <ellipse cx="0.05" cy="0" rx="1.82" ry="1.28" fill={`url(#${svgId}-head-gradient)`} />
           <circle r="0.52" fill="#ffffff" opacity="0.96" />
         </g>
-      </g>
-
-      <g opacity="0">
-        <animate
-          attributeName="opacity"
-          values="0;0;0.98;0.22;0.82;0"
-          keyTimes={`0;${flashStart};${flashPeak};${flashBreathLow};${flashBreathPeak};1`}
-          dur={`${cycleDuration}s`}
-          repeatCount="indefinite"
-        />
-        <rect
-          x={topPoint.x - 14.2}
-          y={topPoint.y - 6.45}
-          width="28.4"
-          height="12.9"
-          rx="3.9"
-          fill={`url(#${svgId}-card-fill-gradient)`}
-          filter={`url(#${svgId}-card-outer-glow)`}
-        />
-        <rect
-          x={topPoint.x - 12.75}
-          y={topPoint.y - 5.85}
-          width="25.5"
-          height="11.7"
-          rx="3.45"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="0.38"
-          opacity="0.48"
-          filter={`url(#${svgId}-card-flash)`}
-        />
       </g>
     </svg>
   );

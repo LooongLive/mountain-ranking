@@ -33,6 +33,11 @@ export interface IModuleShadow {
   opacity: number;
 }
 
+export interface ITickerGlass {
+  backgroundColor: string;
+  blur: number;
+}
+
 export interface IFloatModule {
   id: string;
   type: 'image' | 'video' | 'ticker';
@@ -44,6 +49,8 @@ export interface IFloatModule {
   orientation: 'portrait' | 'landscape';
   scrollItems?: IScrollItem[];
   visibleRows?: number;
+  tickerSpeed?: number;
+  glass?: ITickerGlass;
   shadow?: IModuleShadow;
 }
 
@@ -65,6 +72,9 @@ export interface IThemeConfig {
   pathGlowColor: string;
   pathGlowDuration: number;
   pathGlowInterval: number;
+  pathGlowBorderDuration: number;
+  pathGlowBorderColorA: string;
+  pathGlowBorderColorB: string;
   labelScale: number;
   labelFontScale: number;
   labelBgColor: string;
