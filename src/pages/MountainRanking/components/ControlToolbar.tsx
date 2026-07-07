@@ -23,6 +23,7 @@ export default function ControlToolbar() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authError, setAuthError] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const [pathGlowOpen, setPathGlowOpen] = useState(false);
 
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -161,6 +162,46 @@ export default function ControlToolbar() {
             <Plus className="mr-1.5 h-4 w-4" />添加部门
           </Button>
 
+          <Dialog open={pathGlowOpen} onOpenChange={setPathGlowOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader><DialogTitle>攀登流光设置</DialogTitle></DialogHeader>
+              <div className="space-y-5 py-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm">启用流光</Label>
+                  <Switch checked={theme.pathGlowEnabled}
+                    onCheckedChange={(checked) => setTheme((prev) => ({ ...prev, pathGlowEnabled: checked }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>流光颜色</Label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={theme.pathGlowColor}
+                      onChange={(e) => setTheme((prev) => ({ ...prev, pathGlowColor: e.target.value }))}
+                      className="h-9 w-12 cursor-pointer rounded-md border border-border" />
+                    <Input type="text" value={theme.pathGlowColor}
+                      onChange={(e) => setTheme((prev) => ({ ...prev, pathGlowColor: e.target.value }))}
+                      className="h-9 text-xs font-mono flex-1" />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>行进速度</Label>
+                    <span className="text-xs text-muted-foreground tabular-nums">{theme.pathGlowDuration}s</span>
+                  </div>
+                  <Slider value={[theme.pathGlowDuration]} min={4} max={30} step={1}
+                    onValueChange={([v]) => setTheme((prev) => ({ ...prev, pathGlowDuration: v }))} />
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>再次出现间隔</Label>
+                    <span className="text-xs text-muted-foreground tabular-nums">{theme.pathGlowInterval}s</span>
+                  </div>
+                  <Slider value={[theme.pathGlowInterval]} min={0} max={60} step={1}
+                    onValueChange={([v]) => setTheme((prev) => ({ ...prev, pathGlowInterval: v }))} />
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="secondary" size="sm" className="shadow-sm">
@@ -233,6 +274,14 @@ export default function ControlToolbar() {
               <input ref={bgVideoInputRef} type="file" accept="video/*" className="hidden" onChange={handleBgVideoUpload} />
               <DropdownMenuSeparator />
               <DropdownMenuLabel>动画效果</DropdownMenuLabel>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setPathGlowOpen(true);
+                }}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />攀登流光设置
+              </DropdownMenuItem>
               <Dialog>
                 <DialogTrigger asChild>
                   <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
