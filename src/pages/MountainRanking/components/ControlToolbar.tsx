@@ -36,7 +36,7 @@ import { Switch } from '@/components/ui/switch';
 import { useMountainRanking } from '@/context/MountainRankingContext';
 import { exportDashboardImage } from '@/lib/exportDashboardImage';
 
-type SettingsDialog = 'title' | 'path' | 'glow' | 'card' | null;
+type SettingsDialog = 'title' | 'path' | 'glow' | 'card' | 'bubbles' | null;
 
 export default function ControlToolbar() {
   const {
@@ -246,6 +246,9 @@ export default function ControlToolbar() {
               <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setSettingsDialog('glow'); }}>
                 <Sparkles className="mr-2 h-4 w-4" />攀登流光设置
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setSettingsDialog('bubbles'); }}>
+                <MessageSquareText className="mr-2 h-4 w-4" />漫画气泡设置
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>备用输出</DropdownMenuLabel>
               <DropdownMenuItem disabled={isExporting} onSelect={(e) => { e.preventDefault(); handleExportImage(); }}>
@@ -330,6 +333,118 @@ export default function ControlToolbar() {
               <div className="flex items-center justify-between"><Label>卡片内部字体</Label><span className="text-xs text-muted-foreground tabular-nums">{Math.round((theme.labelFontScale ?? 1) * 100)}%</span></div>
               <Slider value={[theme.labelFontScale ?? 1]} min={0.7} max={2.2} step={0.05} onValueChange={([v]) => setTheme((prev) => ({ ...prev, labelFontScale: v }))} />
             </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><Label>卡片背景透明度</Label><span className="text-xs text-muted-foreground tabular-nums">{Math.round(getAlphaFromRgba(theme.labelBgColor, 0.25) * 100)}%</span></div>
+              <Slider value={[getAlphaFromRgba(theme.labelBgColor, 0.25)]} min={0} max={1} step={0.05} onValueChange={([v]) => setTheme((prev) => ({ ...prev, labelBgColor: rgbaFromHex(getHexFromRgba(theme.labelBgColor, '#ffffff'), v) }))} />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><Label>卡片背景模糊</Label><span className="text-xs text-muted-foreground tabular-nums">{theme.labelBlur ?? 35}px</span></div>
+              <Slider value={[theme.labelBlur ?? 35]} min={0} max={100} step={1} onValueChange={([v]) => setTheme((prev) => ({ ...prev, labelBlur: v }))} />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={settingsDialog === 'bubbles'} onOpenChange={(open) => setSettingsDialog(open ? 'bubbles' : null)}>
+        <DialogContent className="settings-glass-panel sm:max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>漫画气泡设置</DialogTitle></DialogHeader>
+          <div className="space-y-5 py-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">启用气泡</Label>
+              <Switch checked={theme.speechBubblesEnabled} onCheckedChange={(checked) => setTheme((prev) => ({ ...prev, speechBubblesEnabled: checked }))} />
+            </div>
+            <div className="space-y-3">
+              <Label>气泡款式</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: 'rounded', label: '圆润' },
+                  { value: 'comic', label: '漫画' },
+                  { value: 'cloud', label: '云朵' },
+                  { value: 'burst', label: '爆炸' },
+                  { value: 'caption', label: '对白' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setTheme((prev) => ({ ...prev, speechBubbleStyle: opt.value as typeof theme.speechBubbleStyle }))}
+                    className={`px-3 py-2 rounded-md text-sm border transition-colors ${theme.speechBubbleStyle === opt.value ? 'bg-primary text-primary-foreground border-primary' : 'bg-background/70 border-border hover:bg-accent/20'}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>背景颜色</Label>
+                <input
+                  type="color"
+                  value={getHexFromRgba(theme.speechBubbleColor, '#ffffff')}
+                  onChange={(e) => setTheme((prev) => ({ ...prev, speechBubbleColor: rgbaFromHex(e.target.value, getAlphaFromRgba(theme.speechBubbleColor, 0.58)) }))}
+                  className="h-9 w-12 cursor-pointer rounded-md border border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>文字颜色</Label>
+                <input
+                  type="color"
+                  value={getHexFromRgba(theme.speechBubbleTextColor, '#1e3a5f')}
+                  onChange={(e) => setTheme((prev) => ({ ...prev, speechBubbleTextColor: e.target.value }))}
+                  className="h-9 w-12 cursor-pointer rounded-md border border-border"
+                />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><Label>背景透明度</Label><span className="text-xs text-muted-foreground tabular-nums">{Math.round(getAlphaFromRgba(theme.speechBubbleColor, 0.58) * 100)}%</span></div>
+              <Slider
+                value={[getAlphaFromRgba(theme.speechBubbleColor, 0.58)]}
+                min={0}
+                max={1}
+                step={0.05}
+                onValueChange={([v]) => setTheme((prev) => ({ ...prev, speechBubbleColor: rgbaFromHex(getHexFromRgba(theme.speechBubbleColor, '#ffffff'), v) }))}
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><Label>整体透明度</Label><span className="text-xs text-muted-foreground tabular-nums">{Math.round((theme.speechBubbleOpacity ?? 0.92) * 100)}%</span></div>
+              <Slider value={[theme.speechBubbleOpacity ?? 0.92]} min={0.2} max={1} step={0.05} onValueChange={([v]) => setTheme((prev) => ({ ...prev, speechBubbleOpacity: v }))} />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><Label>气泡大小</Label><span className="text-xs text-muted-foreground tabular-nums">{Math.round((theme.speechBubbleScale ?? 1) * 100)}%</span></div>
+              <Slider value={[theme.speechBubbleScale ?? 1]} min={0.65} max={1.8} step={0.05} onValueChange={([v]) => setTheme((prev) => ({ ...prev, speechBubbleScale: v }))} />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><Label>玻璃模糊</Label><span className="text-xs text-muted-foreground tabular-nums">{theme.speechBubbleBlur ?? 22}px</span></div>
+              <Slider value={[theme.speechBubbleBlur ?? 22]} min={0} max={48} step={1} onValueChange={([v]) => setTheme((prev) => ({ ...prev, speechBubbleBlur: v }))} />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><Label>单次停留时间</Label><span className="text-xs text-muted-foreground tabular-nums">{theme.speechBubbleHoldSeconds ?? 2.6}s</span></div>
+              <Slider value={[theme.speechBubbleHoldSeconds ?? 2.6]} min={1.5} max={5} step={0.1} onValueChange={([v]) => setTheme((prev) => ({ ...prev, speechBubbleHoldSeconds: v }))} />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><Label>再次出现间隔</Label><span className="text-xs text-muted-foreground tabular-nums">{theme.speechBubbleIntervalSeconds ?? 5}s</span></div>
+              <Slider value={[theme.speechBubbleIntervalSeconds ?? 5]} min={2} max={12} step={0.5} onValueChange={([v]) => setTheme((prev) => ({ ...prev, speechBubbleIntervalSeconds: v }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>第一名气泡预设</Label>
+              <textarea
+                value={(theme.speechBubbleMessagesTop ?? []).join('\n')}
+                onChange={(e) => setTheme((prev) => ({ ...prev, speechBubbleMessagesTop: e.target.value.split(/\n|[｜|]/).map((item) => item.trim()).filter(Boolean) }))}
+                className="min-h-24 w-full resize-y rounded-md border border-border bg-background/70 p-2 text-sm leading-relaxed"
+                placeholder="每行一句，随机出现"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>其他部门气泡预设</Label>
+              <textarea
+                value={(theme.speechBubbleMessagesNormal ?? []).join('\n')}
+                onChange={(e) => setTheme((prev) => ({ ...prev, speechBubbleMessagesNormal: e.target.value.split(/\n|[｜|]/).map((item) => item.trim()).filter(Boolean) }))}
+                className="min-h-24 w-full resize-y rounded-md border border-border bg-background/70 p-2 text-sm leading-relaxed"
+                placeholder="每行一句，随机出现"
+              />
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              单独点击卡片旁边的气泡，可以为某一个部门覆盖自己的文案、颜色、透明度和大小。
+            </p>
           </div>
         </DialogContent>
       </Dialog>
@@ -428,6 +543,10 @@ export default function ControlToolbar() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between"><Label className="text-xs">标签背景透明度</Label><span className="text-xs text-muted-foreground">{Math.round(getAlphaFromRgba(theme.labelBgColor, 0.25) * 100)}%</span></div>
                 <Slider value={[getAlphaFromRgba(theme.labelBgColor, 0.25)]} min={0} max={1} step={0.05} onValueChange={([v]) => setTheme((prev) => ({ ...prev, labelBgColor: rgbaFromHex(getHexFromRgba(theme.labelBgColor, '#ffffff'), v) }))} />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between"><Label className="text-xs">标签背景模糊</Label><span className="text-xs text-muted-foreground">{theme.labelBlur ?? 35}px</span></div>
+                <Slider value={[theme.labelBlur ?? 35]} min={0} max={100} step={1} onValueChange={([v]) => setTheme((prev) => ({ ...prev, labelBlur: v }))} />
               </div>
             </div>
             <div className="space-y-3 pt-2 border-t border-border/60">

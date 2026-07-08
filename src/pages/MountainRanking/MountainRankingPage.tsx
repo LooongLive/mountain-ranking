@@ -8,6 +8,11 @@ import TitleHeader from './components/TitleHeader';
 import FloatModule from './components/FloatModule';
 import ControlToolbar from './components/ControlToolbar';
 import { cn } from '@/lib/utils';
+import type { IFloatModule } from '@/types/mountain-ranking';
+
+function getFloatModuleContentUrl(module: IFloatModule) {
+  return module.pages?.find((page) => page.contentUrl)?.contentUrl ?? module.contentUrl;
+}
 
 function MountainRankingCanvas() {
   const { sortedDepartments, floatModules, isManualMode, resetToAutoRanking, departments, isEditMode, isLoadingCloud, theme } = useMountainRanking();
@@ -144,9 +149,9 @@ function MountainRankingCanvas() {
             ))}
           </section>
 
-          {floatModules.some((mod) => !mod.minimized && (mod.contentUrl || mod.type === 'ticker')) && (
+          {floatModules.some((mod) => !mod.minimized && (getFloatModuleContentUrl(mod) || mod.type === 'ticker')) && (
             <section className="landscape-dashboard__media-grid">
-              {floatModules.filter((mod) => !mod.minimized && (mod.contentUrl || mod.type === 'ticker')).slice(0, 2).map((mod) => (
+              {floatModules.filter((mod) => !mod.minimized && (getFloatModuleContentUrl(mod) || mod.type === 'ticker')).slice(0, 2).map((mod) => (
                 <article
                   key={mod.id}
                   className="landscape-dashboard__media-card"
@@ -162,9 +167,9 @@ function MountainRankingCanvas() {
                       ))}
                     </div>
                   ) : mod.type === 'image' ? (
-                    <img src={mod.contentUrl} alt={mod.title} />
+                    <img src={getFloatModuleContentUrl(mod)} alt={mod.title} />
                   ) : (
-                    <video src={mod.contentUrl} autoPlay loop muted playsInline preload="auto" />
+                    <video src={getFloatModuleContentUrl(mod)} autoPlay loop muted playsInline preload="auto" />
                   )}
                 </article>
               ))}
@@ -237,11 +242,11 @@ function MountainRankingCanvas() {
                           <div key={item.id}><strong>{item.name}</strong><span>{item.content}</span></div>
                         ))}
                       </div>
-                    ) : mod.contentUrl ? (
+                    ) : getFloatModuleContentUrl(mod) ? (
                       mod.type === 'image' ? (
-                        <img src={mod.contentUrl} alt={mod.title} />
+                        <img src={getFloatModuleContentUrl(mod)} alt={mod.title} />
                       ) : (
-                        <video src={mod.contentUrl} autoPlay loop muted playsInline preload="auto" />
+                        <video src={getFloatModuleContentUrl(mod)} autoPlay loop muted playsInline preload="auto" />
                       )
                     ) : (
                       <span>{mod.type === 'image' ? '暂无图片' : '暂无视频'}</span>

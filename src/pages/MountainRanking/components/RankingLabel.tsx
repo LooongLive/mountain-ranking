@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, UserPlus, GripVertical, RotateCcw, ImagePlus } from 'lucide-react';
+import { X, UserPlus, GripVertical, RotateCcw, ImagePlus, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn, clamp } from '@/lib/utils';
@@ -13,7 +13,7 @@ interface RankingLabelProps {
 
 export default function RankingLabel({ department, canvasRef }: RankingLabelProps) {
   const { isEditMode, isManualMode, updateDepartment, removeDepartment, updateDepartmentPosition,
-    addAvatar, removeAvatar, updateAvatarPosition, theme, uploadFile, sortedDepartments } = useMountainRanking();
+    addAvatar, removeAvatar, updateAvatarPosition, theme, setTheme, uploadFile, sortedDepartments } = useMountainRanking();
 
   const [editingName, setEditingName] = useState(false);
   const [editingCount, setEditingCount] = useState(false);
@@ -23,6 +23,11 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
   const [unitValue, setUnitValue] = useState(department.unit);
   const [isDragging, setIsDragging] = useState(false);
   const [isFlowBorderActive, setIsFlowBorderActive] = useState(false);
+  const [bubbleEditorOpen, setBubbleEditorOpen] = useState(false);
+  const [cardEditorOpen, setCardEditorOpen] = useState(false);
+  const [bubbleVisible, setBubbleVisible] = useState(false);
+  const [activeBubbleText, setActiveBubbleText] = useState('');
+  const [activeBubblePosition, setActiveBubblePosition] = useState<'top' | 'right' | 'bottom' | 'left' | 'top-right' | 'top-left'>('top');
   const labelRef = useRef<HTMLDivElement>(null);
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
   const climberFileInputRef = useRef<HTMLInputElement>(null);
@@ -34,6 +39,59 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
   }, [department.name, department.count, department.unit]);
 
   const isTopDepartment = sortedDepartments[0]?.id === department.id;
+  const departmentRank = sortedDepartments.findIndex((dept) => dept.id === department.id);
+  const bubbleConfig = department.speechBubble ?? {};
+  const bubbleEnabled = bubbleConfig.enabled ?? true;
+  const isTopRankBubble = departmentRank === 0;
+  const rankBubbleMessages = isTopRankBubble ? theme.speechBubbleMessagesTop : theme.speechBubbleMessagesNormal;
+  const bubbleMessages = rankBubbleMessages
+    .filter((message) => message.trim());
+  const bubbleStyle = bubbleConfig.style ?? theme.speechBubbleStyle ?? 'comic';
+  const bubbleBackgroundColor = bubbleConfig.backgroundColor ?? theme.speechBubbleColor;
+  const bubbleTextColor = bubbleConfig.textColor ?? theme.speechBubbleTextColor;
+  const bubbleOpacity = bubbleConfig.opacity ?? theme.speechBubbleOpacity ?? 0.92;
+  const bubbleScale = bubbleConfig.scale ?? theme.speechBubbleScale ?? 1;
+  const bubbleBlur = bubbleConfig.blur ?? theme.speechBubbleBlur ?? 22;
+  const bubbleHoldSeconds = bubbleConfig.holdSeconds ?? theme.speechBubbleHoldSeconds ?? 2.6;
+  const bubbleIntervalSeconds = bubbleConfig.intervalSeconds ?? theme.speechBubbleIntervalSeconds ?? 5;
+  const departmentCardScale = department.cardScale ?? 1;
+  const departmentCardFontScale = department.cardFontScale ?? 1;
+  const speechBubblePositions: Array<typeof activeBubblePosition> = ['top', 'right', 'bottom', 'left', 'top-right', 'top-left'];
+
+  useEffect(() => {
+    if (!theme.speechBubblesEnabled || !bubbleEnabled || bubbleMessages.length === 0) {
+      setBubbleVisible(false);
+      return;
+    }
+
+    let showTimer: number | undefined;
+    let hideTimer: number | undefined;
+    let disposed = false;
+
+    const schedule = (delayMs: number) => {
+      showTimer = window.setTimeout(() => {
+        if (disposed) return;
+        const textIndex = Math.floor(Math.random() * bubbleMessages.length);
+        const positionIndex = Math.floor(Math.random() * speechBubblePositions.length);
+        setActiveBubbleText(bubbleMessages[textIndex]);
+        setActiveBubblePosition(speechBubblePositions[positionIndex]);
+        setBubbleVisible(true);
+        hideTimer = window.setTimeout(() => {
+          if (disposed) return;
+          setBubbleVisible(false);
+          const nextDelay = Math.max(1.5, bubbleIntervalSeconds) * 1000 + Math.random() * 2200;
+          schedule(nextDelay);
+        }, Math.max(1.5, bubbleHoldSeconds) * 1000);
+      }, delayMs);
+    };
+
+    schedule(800 + Math.random() * 2600);
+    return () => {
+      disposed = true;
+      window.clearTimeout(showTimer);
+      window.clearTimeout(hideTimer);
+    };
+  }, [bubbleEnabled, bubbleHoldSeconds, bubbleIntervalSeconds, bubbleMessages.join('|'), speechBubblePositions.length, theme.speechBubblesEnabled]);
 
   useEffect(() => {
     if (!isTopDepartment || !theme.pathGlowEnabled) {
@@ -129,6 +187,28 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
 
   const resetClimberImage = () => { updateDepartment(department.id, { climberImage: undefined }); };
 
+  const bubbleColorMatch = bubbleBackgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+  const bubbleBgHex = bubbleColorMatch
+    ? `#${Number(bubbleColorMatch[1]).toString(16).padStart(2, '0')}${Number(bubbleColorMatch[2]).toString(16).padStart(2, '0')}${Number(bubbleColorMatch[3]).toString(16).padStart(2, '0')}`
+    : bubbleBackgroundColor;
+  const bubbleBgAlpha = bubbleColorMatch?.[4] ? Number(bubbleColorMatch[4]) : 0.58;
+  const setBubbleConfig = (patch: NonNullable<IDepartment['speechBubble']>) => {
+    updateDepartment(department.id, { speechBubble: { ...department.speechBubble, ...patch } });
+  };
+  const updateBubbleBg = (hex: string, alpha = bubbleBgAlpha) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    setBubbleConfig({ backgroundColor: `rgba(${r}, ${g}, ${b}, ${alpha})` });
+  };
+  const updateRankBubbleMessages = (value: string) => {
+    const messages = value.split(/\n|[｜|]/).map((item) => item.trim()).filter(Boolean);
+    setTheme((prev) => ({
+      ...prev,
+      [isTopRankBubble ? 'speechBubbleMessagesTop' : 'speechBubbleMessagesNormal']: messages,
+    }));
+  };
+
   const onDragStart = (e: React.MouseEvent) => {
     if (!isEditMode || !isManualMode) return;
     e.preventDefault(); e.stopPropagation();
@@ -167,8 +247,12 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
   const style: React.CSSProperties = {
     left: `${department.position.x}%`,
     top: `${department.position.y}%`,
-    transform: 'translate(-50%, -50%) scale(var(--ranking-card-scale, 1))',
-  };
+    transform: 'translate(-50%, -50%) scale(calc(var(--ranking-card-scale, 1) * var(--department-card-scale, 1)))',
+    '--department-card-scale': departmentCardScale,
+    '--department-font-scale': departmentCardFontScale,
+  } as React.CSSProperties;
+  const shouldRenderBubble = theme.speechBubblesEnabled && bubbleEnabled && (bubbleVisible || isEditMode);
+  const renderedBubbleText = activeBubbleText || bubbleMessages[0] || '加油';
 
   return (
     <div
@@ -204,20 +288,150 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
           '--flow-border-active-duration': `${Math.max(1, Math.min(12, theme.pathGlowBorderDuration ?? 3))}s`,
         } as React.CSSProperties}
       >
+        {shouldRenderBubble && (
+          <button
+            type="button"
+            className={cn(
+              'speech-bubble',
+              `speech-bubble--${bubbleStyle}`,
+              `speech-bubble--pos-${isEditMode && !bubbleVisible ? 'top' : activeBubblePosition}`,
+              bubbleVisible ? 'speech-bubble--visible' : 'speech-bubble--editing',
+              isEditMode && 'speech-bubble--editable',
+            )}
+            key={`${department.id}-${renderedBubbleText}-${activeBubblePosition}-${bubbleVisible ? 'show' : 'edit'}`}
+            style={{
+              color: bubbleTextColor,
+              backgroundColor: bubbleBackgroundColor,
+              opacity: bubbleOpacity,
+              '--speech-tail-fill': bubbleBackgroundColor,
+              '--speech-bubble-scale': bubbleScale,
+              '--speech-bubble-blur': `${bubbleBlur}px`,
+              '--speech-pop-duration': `${Math.max(1.5, bubbleHoldSeconds)}s`,
+            } as React.CSSProperties}
+            title={isEditMode ? '点击单独设置这个部门的气泡' : undefined}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isEditMode) setBubbleEditorOpen((open) => !open);
+            }}
+          >
+            {renderedBubbleText}
+          </button>
+        )}
+        {theme.speechBubblesEnabled && isEditMode && bubbleEditorOpen && (
+          <div
+            className="speech-bubble-editor"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="speech-bubble-editor__row">
+              <span>启用</span>
+              <input type="checkbox" checked={bubbleEnabled} onChange={(e) => setBubbleConfig({ enabled: e.target.checked })} />
+            </div>
+            <div className="speech-bubble-editor__row">
+              <span>款式</span>
+              <select value={bubbleStyle} onChange={(e) => setBubbleConfig({ style: e.target.value as typeof bubbleStyle })}>
+                <option value="comic">漫画</option>
+                <option value="rounded">圆润</option>
+                <option value="cloud">云朵</option>
+                <option value="burst">爆炸</option>
+                <option value="caption">对白框</option>
+              </select>
+            </div>
+            <div className="speech-bubble-editor__row">
+              <span>背景</span>
+              <input type="color" value={bubbleBgHex} onChange={(e) => updateBubbleBg(e.target.value)} />
+            </div>
+            <div className="speech-bubble-editor__row">
+              <span>文字</span>
+              <input type="color" value={bubbleTextColor} onChange={(e) => setBubbleConfig({ textColor: e.target.value })} />
+            </div>
+            <label>
+              背景透明
+              <input type="range" min="0" max="1" step="0.05" value={bubbleBgAlpha} onChange={(e) => updateBubbleBg(bubbleBgHex, Number(e.target.value))} />
+            </label>
+            <label>
+              整体透明
+              <input type="range" min="0.2" max="1" step="0.05" value={bubbleOpacity} onChange={(e) => setBubbleConfig({ opacity: Number(e.target.value) })} />
+            </label>
+            <label>
+              大小
+              <input type="range" min="0.65" max="1.8" step="0.05" value={bubbleScale} onChange={(e) => setBubbleConfig({ scale: Number(e.target.value) })} />
+            </label>
+            <label>
+              停留秒
+              <input type="range" min="1.5" max="5" step="0.1" value={bubbleHoldSeconds} onChange={(e) => setBubbleConfig({ holdSeconds: Number(e.target.value) })} />
+            </label>
+            <label>
+              间隔秒
+              <input type="range" min="2" max="12" step="0.5" value={bubbleIntervalSeconds} onChange={(e) => setBubbleConfig({ intervalSeconds: Number(e.target.value) })} />
+            </label>
+            <div className="speech-bubble-editor__stack">
+              <span>{isTopRankBubble ? '第一名文案' : '普通文案'}</span>
+              <textarea
+                value={rankBubbleMessages.join('\n')}
+                onChange={(e) => updateRankBubbleMessages(e.target.value)}
+                rows={4}
+                placeholder={isTopRankBubble ? '第一名会随机显示这些文案' : '非第一名会随机显示这些文案'}
+              />
+            </div>
+          </div>
+        )}
+        {isEditMode && cardEditorOpen && (
+          <div
+            className="department-card-editor"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <label>
+              单卡尺寸
+              <span>{Math.round(departmentCardScale * 100)}%</span>
+              <input
+                type="range"
+                min="0.55"
+                max="2.8"
+                step="0.05"
+                value={departmentCardScale}
+                onChange={(e) => updateDepartment(department.id, { cardScale: Number(e.target.value) })}
+              />
+            </label>
+            <label>
+              单卡字体
+              <span>{Math.round(departmentCardFontScale * 100)}%</span>
+              <input
+                type="range"
+                min="0.7"
+                max="2.6"
+                step="0.05"
+                value={departmentCardFontScale}
+                onChange={(e) => updateDepartment(department.id, { cardFontScale: Number(e.target.value) })}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => updateDepartment(department.id, { cardScale: undefined, cardFontScale: undefined })}
+            >
+              恢复全局默认
+            </button>
+          </div>
+        )}
         <div
         className={cn(
-          'ranking-card relative flex items-center gap-3 px-4 py-2.5 rounded-2xl backdrop-blur-xl',
+          'ranking-card relative flex items-center gap-3 px-4 py-2.5 rounded-2xl',
           isEditMode && 'hover:shadow-[0_8px_32px_rgba(0_0_0_0.12),0_2px_4px_rgba(0_0_0_0.06)] hover:-translate-y-0.5 transition-all duration-300 ease-out',
         )}
         style={{
-          backgroundColor: theme.labelBgColor,
+          background:
+            `linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.08) 48%, rgba(255,255,255,0.18)), ${theme.labelBgColor}`,
           borderColor: theme.labelShowBorder ? theme.labelBorderColor : 'transparent',
-          borderWidth: theme.labelShowBorder ? '1px' : '0px',
+          borderWidth: theme.labelShowBorder ? '2px' : '0px',
           borderStyle: 'solid',
           color: theme.labelTextColor,
+          backdropFilter: `blur(${theme.labelBlur ?? 35}px) saturate(1.35)`,
+          WebkitBackdropFilter: `blur(${theme.labelBlur ?? 35}px) saturate(1.35)`,
           boxShadow: theme.labelShowBorder
-            ? '0 4px 24px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)'
-            : 'none',
+            ? '0 0 80px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.48), inset 0 -18px 42px rgba(255,255,255,0.08)'
+            : '0 16px 44px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.42)',
         }}
       >
         <div className="shrink-0 relative group">
@@ -300,6 +514,10 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
 
         {isEditMode && (
           <div className="flex items-center gap-1 shrink-0">
+            <Button type="button" size="icon" variant="ghost" className="h-6 w-6 rounded-full"
+              onClick={(e) => { e.stopPropagation(); setCardEditorOpen((open) => !open); }} title="单独调整卡片">
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+            </Button>
             <Button type="button" size="icon" variant="ghost" className="h-6 w-6 rounded-full"
               onClick={(e) => { e.stopPropagation(); avatarFileInputRef.current?.click(); }} title="添加大头贴">
               <UserPlus className="w-3.5 h-3.5" />

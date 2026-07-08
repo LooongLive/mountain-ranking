@@ -6,11 +6,28 @@ export interface IAvatar {
   offsetY: number;
 }
 
+export type SpeechBubbleStyle = 'rounded' | 'comic' | 'cloud' | 'burst' | 'caption';
+
+export interface ISpeechBubbleConfig {
+  enabled?: boolean;
+  style?: SpeechBubbleStyle;
+  backgroundColor?: string;
+  textColor?: string;
+  opacity?: number;
+  scale?: number;
+  blur?: number;
+  messages?: string[];
+  holdSeconds?: number;
+  intervalSeconds?: number;
+}
+
 export interface IDepartment {
   id: string;
   name: string;
   count: number;
   unit: string;
+  cardScale?: number;
+  cardFontScale?: number;
   position: {
     x: number;
     y: number;
@@ -18,6 +35,7 @@ export interface IDepartment {
   };
   avatars: IAvatar[];
   climberImage?: string;
+  speechBubble?: ISpeechBubbleConfig;
 }
 
 export interface IScrollItem {
@@ -36,6 +54,15 @@ export interface IModuleShadow {
 export interface ITickerGlass {
   backgroundColor: string;
   blur: number;
+  innerBorderOpacity?: number;
+}
+
+export type AnnouncementTransition = 'cut' | 'fade' | 'slide' | 'zoom' | 'sword';
+
+export interface IFloatModulePage {
+  id: string;
+  contentUrl: string;
+  durationSeconds: number;
 }
 
 export interface IFloatModule {
@@ -43,6 +70,8 @@ export interface IFloatModule {
   type: 'image' | 'video' | 'ticker';
   title: string;
   contentUrl: string;
+  pages?: IFloatModulePage[];
+  carouselTransition?: AnnouncementTransition;
   position: { x: number; y: number };
   size: { width: number; height: number };
   minimized: boolean;
@@ -50,6 +79,7 @@ export interface IFloatModule {
   scrollItems?: IScrollItem[];
   visibleRows?: number;
   tickerSpeed?: number;
+  tickerFontSize?: number;
   glass?: ITickerGlass;
   shadow?: IModuleShadow;
 }
@@ -78,11 +108,23 @@ export interface IThemeConfig {
   labelScale: number;
   labelFontScale: number;
   labelBgColor: string;
+  labelBlur: number;
   labelBorderColor: string;
   labelTextColor: string;
   labelShowBorder: boolean;
   floatBgColor: string;
   floatBorderColor: string;
+  speechBubblesEnabled: boolean;
+  speechBubbleStyle: SpeechBubbleStyle;
+  speechBubbleColor: string;
+  speechBubbleTextColor: string;
+  speechBubbleOpacity: number;
+  speechBubbleScale: number;
+  speechBubbleBlur: number;
+  speechBubbleHoldSeconds: number;
+  speechBubbleIntervalSeconds: number;
+  speechBubbleMessagesTop: string[];
+  speechBubbleMessagesNormal: string[];
 }
 
 export interface IRankingState {

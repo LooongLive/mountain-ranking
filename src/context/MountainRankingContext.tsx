@@ -50,11 +50,23 @@ const INITIAL_THEME: IThemeConfig = {
   labelScale: 1,
   labelFontScale: 1,
   labelBgColor: 'rgba(255, 255, 255, 0.25)',
+  labelBlur: 44,
   labelBorderColor: 'rgba(255, 255, 255, 0.6)',
   labelTextColor: '#1e3a5f',
   labelShowBorder: true,
   floatBgColor: 'rgba(255, 255, 255, 0.75)',
   floatBorderColor: 'rgba(255, 255, 255, 0.6)',
+  speechBubblesEnabled: true,
+  speechBubbleStyle: 'comic',
+  speechBubbleColor: 'rgba(255, 255, 255, 0.58)',
+  speechBubbleTextColor: '#1e3a5f',
+  speechBubbleOpacity: 0.92,
+  speechBubbleScale: 1,
+  speechBubbleBlur: 22,
+  speechBubbleHoldSeconds: 2.6,
+  speechBubbleIntervalSeconds: 5,
+  speechBubbleMessagesTop: ['我们是第一啦', '继续加油', '我们要保持', '高处不胜寒', '下面的朋友加油鸭'],
+  speechBubbleMessagesNormal: ['伙伴们冲鸭', '加油', '一起努力呀', '永争第一', '马上追上啦', '今天也要进步'],
 };
 
 const INITIAL_FLOAT_MODULES: IFloatModule[] = [
@@ -336,6 +348,8 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
       type,
       title: type === 'image' ? '图片公告' : type === 'video' ? '视频公告' : '改善信息滚动',
       contentUrl: '',
+      pages: type === 'image' || type === 'video' ? [] : undefined,
+      carouselTransition: type === 'image' || type === 'video' ? 'fade' : undefined,
       position: { x: 120 + floatModules.length * 30, y: 180 + floatModules.length * 30 },
       size,
       minimized: false,
@@ -348,7 +362,7 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
           ]
         : undefined,
       tickerSpeed: type === 'ticker' ? 12 : undefined,
-      glass: type === 'ticker' ? { backgroundColor: 'rgba(255, 255, 255, 0.32)', blur: 26 } : undefined,
+      glass: type === 'ticker' ? { backgroundColor: 'rgba(255, 255, 255, 0.32)', blur: 26, innerBorderOpacity: 0.24 } : undefined,
       shadow: { x: 0, y: 16, blur: 36, opacity: 0.24 },
     };
     setFloatModules((prev) => [...prev, newMod]);

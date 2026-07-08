@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import {
   X,
   Minus,
@@ -15,7 +15,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { cn, generateId } from '@/lib/utils';
-import type { IFloatModule, IModuleShadow, IScrollItem, ITickerGlass } from '@/types/mountain-ranking';
+import type {
+  AnnouncementTransition,
+  IFloatModule,
+  IFloatModulePage,
+  IModuleShadow,
+  IScrollItem,
+  ITickerGlass,
+} from '@/types/mountain-ranking';
 import { useMountainRanking } from '@/context/MountainRankingContext';
 
 interface FloatModuleProps {
@@ -24,7 +31,14 @@ interface FloatModuleProps {
 }
 
 const DEFAULT_SHADOW: IModuleShadow = { x: 0, y: 16, blur: 36, opacity: 0.24 };
-const DEFAULT_TICKER_GLASS: ITickerGlass = { backgroundColor: 'rgba(255, 255, 255, 0.32)', blur: 26 };
+const DEFAULT_TICKER_GLASS: ITickerGlass = { backgroundColor: 'rgba(255, 255, 255, 0.32)', blur: 26, innerBorderOpacity: 0.24 };
+const TRANSITION_OPTIONS: Array<{ value: AnnouncementTransition; label: string }> = [
+  { value: 'fade', label: '淡入淡出' },
+  { value: 'cut', label: '直接切换' },
+  { value: 'slide', label: '横向滑入' },
+  { value: 'zoom', label: '缩放浮现' },
+  { value: 'sword', label: '剑影扫过' },
+];
 
 function hexToRgb(hex: string) {
   const clean = hex.replace('#', '').trim();
@@ -64,16 +78,29 @@ export default function FloatModule({ module }: FloatModuleProps) {
   const { isEditMode, updateFloatModule, removeFloatModule, toggleFloatOrientation, theme, uploadFile } = useMountainRanking();
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [activePageIndex, setActivePageIndex] = useState(0);
+  const [uploadTargetPageId, setUploadTargetPageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragStartRef = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
   const resizeStartRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
 
   const moduleShadow = module.shadow ?? DEFAULT_SHADOW;
   const isTicker = module.type === 'ticker';
+  const isAnnouncement = module.type === 'image' || module.type === 'video';
+  const announcementTransition = module.carouselTransition ?? 'fade';
+  const announcementPages = useMemo<IFloatModulePage[]>(() => {
+    if (!isAnnouncement) return [];
+    if (module.pages?.length) return module.pages;
+    if (module.contentUrl) return [{ id: 'legacy', contentUrl: module.contentUrl, durationSeconds: 5 }];
+    return [];
+  }, [isAnnouncement, module.contentUrl, module.pages]);
+  const activeAnnouncementPage = announcementPages[activePageIndex] ?? announcementPages[0];
   const visibleRows = Math.max(1, Math.min(8, module.visibleRows ?? 2));
   const scrollItems = module.scrollItems ?? [];
   const tickerSpeed = Math.max(4, Math.min(90, module.tickerSpeed ?? 12));
+  const tickerFontSize = Math.max(10, Math.min(36, module.tickerFontSize ?? 15));
   const tickerGlass = { ...DEFAULT_TICKER_GLASS, ...(module.glass ?? {}) };
+  const tickerInnerBorderOpacity = Math.max(0, Math.min(1, tickerGlass.innerBorderOpacity ?? 0.24));
   const shouldScroll = scrollItems.length > visibleRows && scrollItems.length > 2;
   const tickerRows = useMemo(
     () => (shouldScroll ? [...scrollItems, ...scrollItems] : scrollItems),
@@ -147,7 +174,23 @@ export default function FloatModule({ module }: FloatModuleProps) {
     if (!file || isTicker) return;
     try {
       const url = await uploadFile(file, module.type === 'image' ? 'modules/images' : 'modules/videos');
-      updateFloatModule(module.id, { contentUrl: url });
+      if (isAnnouncement) {
+        const pages = getStoredAnnouncementPages();
+        const targetPageId = uploadTargetPageId ?? activeAnnouncementPage?.id ?? pages[activePageIndex]?.id;
+        const targetIndex = targetPageId ? pages.findIndex((page) => page.id === targetPageId) : -1;
+        const nextPages = targetIndex >= 0
+          ? pages.map((page, index) => (index === targetIndex ? { ...page, contentUrl: url } : page))
+          : [...pages, { id: generateId('page'), contentUrl: url, durationSeconds: 5 }];
+        updateFloatModule(module.id, {
+          contentUrl: nextPages[0]?.contentUrl ?? url,
+          pages: nextPages,
+          carouselTransition: announcementTransition,
+        });
+        setActivePageIndex(targetIndex >= 0 ? targetIndex : nextPages.length - 1);
+        setUploadTargetPageId(null);
+      } else {
+        updateFloatModule(module.id, { contentUrl: url });
+      }
     } catch (error) {
       alert(error instanceof Error ? error.message : '文件上传失败');
     }
@@ -187,7 +230,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
     width: module.size.width,
     height: module.minimized ? undefined : isTicker ? undefined : module.size.height,
     background: isTicker
-      ? `linear-gradient(135deg, rgba(255,255,255,0.46), rgba(255,255,255,0.10) 46%, rgba(255,255,255,0.28)), ${tickerGlass.backgroundColor}`
+      ? tickerGlass.backgroundColor
       : theme.floatBgColor,
     borderColor: theme.floatBorderColor,
     borderWidth: '1px',
@@ -195,14 +238,75 @@ export default function FloatModule({ module }: FloatModuleProps) {
     boxShadow: `${moduleShadow.x}px ${moduleShadow.y}px ${moduleShadow.blur}px rgba(0, 0, 0, ${moduleShadow.opacity})`,
   };
 
+  const tickerGlassHex = colorToHex(tickerGlass.backgroundColor);
+  const tickerGlassAlpha = colorToAlpha(tickerGlass.backgroundColor);
   const tickerStyle = {
     '--ticker-visible-rows': visibleRows,
     '--ticker-duration': `${tickerSpeed}s`,
+    '--ticker-font-size': `${tickerFontSize}px`,
+    '--ticker-row-height': `${Math.max(42, tickerFontSize * 2.8)}px`,
     '--ticker-glass-bg': tickerGlass.backgroundColor,
+    '--ticker-glass-alpha': tickerGlassAlpha,
+    '--ticker-glass-highlight': tickerGlassAlpha <= 0.01 ? 0 : 1,
     '--ticker-glass-blur': `${tickerGlass.blur}px`,
+    '--ticker-inner-border-opacity': tickerInnerBorderOpacity,
+    '--ticker-row-border-opacity': Math.min(1, tickerInnerBorderOpacity * 1.6),
   } as React.CSSProperties;
-  const tickerGlassHex = colorToHex(tickerGlass.backgroundColor);
-  const tickerGlassAlpha = colorToAlpha(tickerGlass.backgroundColor);
+
+  useEffect(() => {
+    if (activePageIndex >= announcementPages.length) {
+      setActivePageIndex(0);
+    }
+  }, [activePageIndex, announcementPages.length]);
+
+  useEffect(() => {
+    if (!isAnnouncement || announcementPages.length <= 1) return;
+    const duration = Math.max(1, Math.min(120, activeAnnouncementPage?.durationSeconds ?? 5)) * 1000;
+    const timer = window.setTimeout(() => {
+      setActivePageIndex((index) => (index + 1) % announcementPages.length);
+    }, duration);
+    return () => window.clearTimeout(timer);
+  }, [activeAnnouncementPage?.durationSeconds, announcementPages.length, isAnnouncement]);
+
+  const getStoredAnnouncementPages = () => {
+    if (module.pages?.length) return module.pages;
+    if (module.contentUrl) {
+      return [{ id: generateId('page'), contentUrl: module.contentUrl, durationSeconds: 5 }];
+    }
+    return [];
+  };
+
+  const setAnnouncementPages = (pages: IFloatModulePage[], nextActiveIndex = activePageIndex) => {
+    updateFloatModule(module.id, {
+      pages,
+      contentUrl: pages[0]?.contentUrl ?? '',
+      carouselTransition: announcementTransition,
+    });
+    setActivePageIndex(Math.max(0, Math.min(nextActiveIndex, Math.max(0, pages.length - 1))));
+  };
+
+  const addAnnouncementPage = () => {
+    const pages = getStoredAnnouncementPages();
+    const nextPages = [...pages, { id: generateId('page'), contentUrl: '', durationSeconds: 5 }];
+    setAnnouncementPages(nextPages, nextPages.length - 1);
+  };
+
+  const updateAnnouncementPage = (pageId: string, patch: Partial<IFloatModulePage>) => {
+    const pages = getStoredAnnouncementPages();
+    setAnnouncementPages(pages.map((page) => (page.id === pageId ? { ...page, ...patch } : page)));
+  };
+
+  const removeAnnouncementPage = (pageId: string) => {
+    const pages = getStoredAnnouncementPages();
+    const targetIndex = pages.findIndex((page) => page.id === pageId);
+    const nextPages = pages.filter((page) => page.id !== pageId);
+    setAnnouncementPages(nextPages, Math.max(0, targetIndex - 1));
+  };
+
+  const openUploadForPage = (pageId: string | null) => {
+    setUploadTargetPageId(pageId);
+    fileInputRef.current?.click();
+  };
 
   return (
     <div
@@ -233,7 +337,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
       )}
 
       {!module.minimized && (
-        <div className={cn('relative flex-1 bg-muted/30 overflow-hidden', isTicker && 'overflow-visible')}>
+        <div className={cn('relative h-full min-h-0 flex-1 bg-muted/30 overflow-hidden', isTicker && 'overflow-visible')}>
           {isEditMode && (
             <div className="absolute top-2 right-2 z-20 flex items-center gap-1">
               {module.type === 'image' && (
@@ -285,6 +389,16 @@ export default function FloatModule({ module }: FloatModuleProps) {
                       onValueChange={([v]) => updateFloatModule(module.id, { tickerSpeed: v })}
                     />
                   </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <Label className="text-xs">文字大小：{tickerFontSize}px</Label>
+                    <Slider
+                      value={[tickerFontSize]}
+                      min={10}
+                      max={36}
+                      step={1}
+                      onValueChange={([v]) => updateFloatModule(module.id, { tickerFontSize: v })}
+                    />
+                  </div>
                   <div className="grid grid-cols-[72px_1fr] items-center gap-2">
                     <Label className="text-xs">玻璃颜色</Label>
                     <div className="flex items-center gap-2">
@@ -299,7 +413,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
                     <Label className="text-xs">透明度</Label>
                     <Slider
                       value={[tickerGlassAlpha]}
-                      min={0.08}
+                      min={0}
                       max={0.85}
                       step={0.01}
                       onValueChange={([v]) => updateTickerGlass({ backgroundColor: toRgba(tickerGlassHex, v) })}
@@ -312,6 +426,19 @@ export default function FloatModule({ module }: FloatModuleProps) {
                       step={1}
                       onValueChange={([v]) => updateTickerGlass({ blur: v })}
                     />
+                    <Label className="text-xs">内框边线</Label>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[tickerInnerBorderOpacity]}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        onValueChange={([v]) => updateTickerGlass({ innerBorderOpacity: v })}
+                      />
+                      <span className="w-9 text-right text-[11px] text-muted-foreground tabular-nums">
+                        {Math.round(tickerInnerBorderOpacity * 100)}%
+                      </span>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     {scrollItems.map((item) => (
@@ -330,39 +457,113 @@ export default function FloatModule({ module }: FloatModuleProps) {
                 </div>
               )}
             </div>
-          ) : module.contentUrl ? (
-            module.type === 'image' ? (
-              <img src={module.contentUrl} alt={module.title} className="w-full h-full object-contain" />
-            ) : (
-              <video
-                src={module.contentUrl}
-                controls={isEditMode}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="auto"
-                className="w-full h-full object-contain bg-black"
-                onMouseDown={(e) => e.stopPropagation()}
-              />
-            )
+          ) : activeAnnouncementPage?.contentUrl ? (
+            <div
+              key={`${activeAnnouncementPage.id}-${activePageIndex}-${announcementTransition}`}
+              className={cn('announcement-page', `announcement-page--${announcementTransition}`)}
+            >
+              {module.type === 'image' ? (
+                <img src={activeAnnouncementPage.contentUrl} alt={module.title} />
+              ) : (
+                <video
+                  src={activeAnnouncementPage.contentUrl}
+                  controls={isEditMode}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                  onMouseDown={(e) => e.stopPropagation()}
+                />
+              )}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-3 p-4 text-center">
               {module.type === 'image' ? <ImageIcon className="w-10 h-10 text-muted-foreground/50" /> : <Video className="w-10 h-10 text-muted-foreground/50" />}
               <p className="text-sm text-muted-foreground">{module.type === 'image' ? '暂无图片' : '暂无视频'}</p>
               {isEditMode && (
-                <Button type="button" size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()} className="gap-1.5">
+                <Button type="button" size="sm" variant="secondary" onClick={() => openUploadForPage(null)} className="gap-1.5">
                   <Upload className="w-3.5 h-3.5" />上传{module.type === 'image' ? '图片' : '视频'}
                 </Button>
               )}
             </div>
           )}
 
-          {isEditMode && !isTicker && module.contentUrl && (
+          {isEditMode && !isTicker && activeAnnouncementPage?.contentUrl && (
             <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-              <Button type="button" size="sm" variant="secondary" onClick={() => fileInputRef.current?.click()} className="gap-1.5 shadow-lg">
+              <Button type="button" size="sm" variant="secondary" onClick={() => openUploadForPage(activeAnnouncementPage.id)} className="gap-1.5 shadow-lg">
                 <Upload className="w-3.5 h-3.5" />替换
               </Button>
+            </div>
+          )}
+
+          {isEditMode && isAnnouncement && (
+            <div className="announcement-carousel-editor" data-module-editor onMouseDown={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-[11px] font-semibold">公告轮播</Label>
+                <Button type="button" size="sm" variant="secondary" className="h-7 gap-1 px-2 text-[11px]" onClick={addAnnouncementPage}>
+                  <Plus className="w-3.5 h-3.5" />新增页面
+                </Button>
+              </div>
+              <div className="grid grid-cols-[64px_1fr] items-center gap-2">
+                <Label className="text-[11px]">切换效果</Label>
+                <select
+                  value={announcementTransition}
+                  onChange={(e) => updateFloatModule(module.id, { carouselTransition: e.target.value as AnnouncementTransition })}
+                  className="h-8 rounded-md border border-white/50 bg-white/85 px-2 text-[12px] text-foreground outline-none"
+                >
+                  {TRANSITION_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="announcement-page-list">
+                {(module.pages?.length ? module.pages : announcementPages).map((page, index) => (
+                  <div key={page.id} className={cn('announcement-page-row', index === activePageIndex && 'is-active')}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={index === activePageIndex ? 'default' : 'secondary'}
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => setActivePageIndex(index)}
+                    >
+                      第{index + 1}页
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="h-7 gap-1 px-2 text-[11px]"
+                      onClick={() => openUploadForPage(page.id)}
+                    >
+                      <Upload className="w-3.5 h-3.5" />{page.contentUrl ? '替换' : '上传'}
+                    </Button>
+                    <label className="flex items-center gap-1 text-[11px] text-foreground/80">
+                      停留
+                      <Input
+                        type="number"
+                        min={1}
+                        max={120}
+                        value={page.durationSeconds}
+                        onChange={(e) => updateAnnouncementPage(page.id, { durationSeconds: Math.max(1, Math.min(120, Number(e.target.value) || 1)) })}
+                        className="h-7 w-14 px-1 text-center text-[11px]"
+                      />
+                      秒
+                    </label>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive"
+                      onClick={() => removeAnnouncementPage(page.id)}
+                      disabled={(module.pages?.length ?? announcementPages.length) <= 1}
+                      title="删除页面"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
