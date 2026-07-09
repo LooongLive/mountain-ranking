@@ -487,7 +487,7 @@
 
 .mountain-dashboard.is-tv-display.is-preview .ranking-card span,
 .mountain-dashboard.is-tv-display.is-preview .ranking-card input {
-  font-size: calc(18px * var(--ranking-font-scale, 1) * var(--department-font-scale, 1)) !important;
+  font-size: 1em !important;
 }
 
 .ticker-module {
@@ -661,6 +661,25 @@
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
 }
 
+.ticker-editor-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(188px, 34vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-width: thin;
+}
+
+.ticker-editor-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ticker-editor-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.28);
+}
+
 .module-shadow-editor {
   position: absolute;
   left: 10px;
@@ -747,9 +766,7 @@ body,
 }
 
 .mountain-dashboard.is-tv-display {
-  --tv-preview-card-scale: 1.58;
-  --tv-preview-module-scale: 1.44;
-  --tv-edit-card-scale: 0.76;
+  --tv-preview-module-scale: 1;
   --tv-edit-module-scale: 0.82;
   --tv-toolbar-scale: 0.82;
 }
@@ -769,7 +786,7 @@ body,
 }
 
 .mountain-dashboard.is-tv-display.is-preview .ranking-label {
-  transform: translate(-50%, -50%) scale(calc(var(--tv-preview-card-scale) * var(--department-card-scale, 1))) !important;
+  transform: translate(-50%, -50%) scale(calc(var(--ranking-card-scale, 1) * var(--department-card-scale, 1))) !important;
   transform-origin: center !important;
 }
 
@@ -777,7 +794,16 @@ body,
   gap: 10px !important;
   padding: 10px 16px !important;
   border-radius: 15px !important;
-  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.42), transparent 30%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.1) 52%, rgba(255, 255, 255, 0.2)),
+    var(--card-glass-bg, rgba(255, 255, 255, 0.18)) !important;
+  box-shadow:
+    0 14px 42px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -18px 42px rgba(255, 255, 255, 0.08) !important;
+  -webkit-backdrop-filter: blur(calc(var(--label-glass-blur, 35px) * 0.75)) saturate(1.25) !important;
+  backdrop-filter: blur(calc(var(--label-glass-blur, 35px) * 0.75)) saturate(1.25) !important;
 }
 
 .mountain-dashboard.is-tv-display.is-preview .ranking-card .w-10.h-12 {
@@ -787,7 +813,7 @@ body,
 
 .mountain-dashboard.is-tv-display.is-preview .ranking-card span,
 .mountain-dashboard.is-tv-display.is-preview .ranking-card input {
-  font-size: calc(18px * var(--department-font-scale, 1)) !important;
+  font-size: 1em !important;
 }
 
 .mountain-dashboard.is-tv-display.is-preview .float-module {
@@ -811,7 +837,7 @@ body,
 }
 
 .mountain-dashboard.is-tv-display.is-editing .ranking-label {
-  transform: translate(-50%, -50%) scale(calc(var(--tv-edit-card-scale) * var(--department-card-scale, 1))) !important;
+  transform: translate(-50%, -50%) scale(calc(var(--ranking-card-scale, 1) * var(--department-card-scale, 1))) !important;
   transform-origin: center !important;
 }
 
@@ -846,11 +872,18 @@ body,
 
 @media (min-width: 2200px) {
   .mountain-dashboard.is-tv-display {
-    --tv-preview-card-scale: 1.78;
-    --tv-preview-module-scale: 1.62;
-    --tv-edit-card-scale: 0.7;
+    --tv-preview-module-scale: 1.08;
     --tv-edit-module-scale: 0.74;
     --tv-toolbar-scale: 0.74;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mountain-dashboard.is-tv-display .ranking-card {
+    background:
+      radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.42), transparent 30%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.16) 52%, rgba(255, 255, 255, 0.26)),
+      rgba(255, 255, 255, 0.22) !important;
   }
 }
 
@@ -1308,6 +1341,7 @@ body,
   }
 
   .mobile-dashboard__media {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1319,12 +1353,61 @@ body,
     font-weight: 600;
   }
 
+  .mobile-dashboard__media.is-swipeable {
+    touch-action: pan-y;
+  }
+
   .mobile-dashboard__media img,
   .mobile-dashboard__media video {
     width: 100%;
     height: auto;
     max-height: 62svh;
     object-fit: contain;
+  }
+
+  .mobile-dashboard__module-dots {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    display: flex;
+    gap: 6px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.18);
+    padding: 5px 7px;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-dashboard__module-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.56);
+  }
+
+  .mobile-dashboard__module-dots span.is-active {
+    width: 16px;
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  .mobile-dashboard__ticker.ticker-module {
+    width: 100%;
+    min-height: auto;
+    padding: 8px;
+  }
+
+  .mobile-dashboard__ticker-viewport.ticker-viewport {
+    width: 100%;
+    max-height: min(42svh, calc(var(--ticker-visible-rows, 2) * var(--ticker-row-height, 42px)));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  .mobile-dashboard__ticker-viewport .ticker-track {
+    min-height: 100%;
   }
 }
 

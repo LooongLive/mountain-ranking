@@ -421,6 +421,8 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
           isEditMode && 'hover:shadow-[0_8px_32px_rgba(0_0_0_0.12),0_2px_4px_rgba(0_0_0_0.06)] hover:-translate-y-0.5 transition-all duration-300 ease-out',
         )}
         style={{
+          '--card-glass-bg': theme.labelBgColor,
+          '--label-glass-blur': `${theme.labelBlur ?? 35}px`,
           background:
             `linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.08) 48%, rgba(255,255,255,0.18)), ${theme.labelBgColor}`,
           borderColor: theme.labelShowBorder ? theme.labelBorderColor : 'transparent',
@@ -432,7 +434,7 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
           boxShadow: theme.labelShowBorder
             ? '0 0 80px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.48), inset 0 -18px 42px rgba(255,255,255,0.08)'
             : '0 16px 44px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.42)',
-        }}
+        } as React.CSSProperties}
       >
         <div className="shrink-0 relative group">
           <div className="w-10 h-12 flex items-end justify-center overflow-hidden rounded-md" style={{ color: theme.labelTextColor }}>

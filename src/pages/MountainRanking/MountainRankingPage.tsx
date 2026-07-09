@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import { MountainRankingProvider, useMountainRanking } from '@/context/MountainRankingContext';
 import BackgroundLayer from './components/BackgroundLayer';
 import RankingLabel from './components/RankingLabel';
@@ -14,11 +14,111 @@ function getFloatModuleContentUrl(module: IFloatModule) {
   return module.pages?.find((page) => page.contentUrl)?.contentUrl ?? module.contentUrl;
 }
 
+function MobileFloatModuleCard({ module, theme }: { module: IFloatModule; theme: ReturnType<typeof useMountainRanking>['theme'] }) {
+  const [activePageIndex, setActivePageIndex] = useState(0);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isAnnouncement = module.type === 'image' || module.type === 'video';
+  const pages = useMemo(() => {
+    if (!isAnnouncement) return [];
+    if (module.pages?.length) return module.pages;
+    if (module.contentUrl) return [{ id: 'legacy', contentUrl: module.contentUrl, durationSeconds: 5 }];
+    return [];
+  }, [isAnnouncement, module.contentUrl, module.pages]);
+  const activePage = pages[activePageIndex] ?? pages[0];
+  const visibleRows = Math.max(1, Math.min(8, module.visibleRows ?? 2));
+  const scrollItems = module.scrollItems ?? [];
+  const shouldScroll = scrollItems.length > visibleRows && scrollItems.length > 2;
+  const tickerRows = shouldScroll ? [...scrollItems, ...scrollItems] : scrollItems;
+  const tickerSpeed = Math.max(4, Math.min(90, module.tickerSpeed ?? 12));
+  const tickerFontSize = Math.max(10, Math.min(36, module.tickerFontSize ?? 15));
+
+  useEffect(() => {
+    if (!isAnnouncement || pages.length <= 1) return;
+    const duration = Math.max(1, Math.min(120, activePage?.durationSeconds ?? 5)) * 1000;
+    const timer = window.setTimeout(() => {
+      setActivePageIndex((index) => (index + 1) % pages.length);
+    }, duration);
+    return () => window.clearTimeout(timer);
+  }, [activePage?.durationSeconds, isAnnouncement, pages.length]);
+
+  const handleTouchStart = (event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent) => {
+    if (!touchStartRef.current || pages.length <= 1) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - touchStartRef.current.x;
+    const dy = touch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+    if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    setActivePageIndex((index) => (dx < 0 ? (index + 1) % pages.length : (index - 1 + pages.length) % pages.length));
+  };
+
+  const tickerStyle = {
+    '--ticker-visible-rows': visibleRows,
+    '--ticker-duration': `${tickerSpeed}s`,
+    '--ticker-font-size': `${tickerFontSize}px`,
+    '--ticker-row-height': `${Math.max(42, tickerFontSize * 2.8)}px`,
+  } as React.CSSProperties;
+
+  return (
+    <article
+      className="mobile-dashboard__module"
+      style={{
+        backgroundColor: theme.floatBgColor,
+        borderColor: theme.floatBorderColor,
+      }}
+    >
+      <h2>{module.title}</h2>
+      <div
+        className={cn('mobile-dashboard__media', isAnnouncement && pages.length > 1 && 'is-swipeable')}
+        onTouchStart={isAnnouncement ? handleTouchStart : undefined}
+        onTouchEnd={isAnnouncement ? handleTouchEnd : undefined}
+      >
+        {module.type === 'ticker' ? (
+          <div className="mobile-dashboard__ticker ticker-module" style={tickerStyle}>
+            <div className="mobile-dashboard__ticker-viewport ticker-viewport">
+              <div className={cn('ticker-track', shouldScroll && 'is-scrolling')}>
+                {(tickerRows.length ? tickerRows : [{ id: 'empty', name: '姓名', content: '改善内容' }]).map((item, index) => (
+                  <div className="ticker-row" key={`${item.id}-${index}`}>
+                    <strong>{item.name}</strong>
+                    <span>{item.content}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : activePage?.contentUrl ? (
+          <>
+            {module.type === 'image' ? (
+              <img key={`${activePage.id}-${activePageIndex}`} src={activePage.contentUrl} alt={module.title} />
+            ) : (
+              <video key={`${activePage.id}-${activePageIndex}`} src={activePage.contentUrl} autoPlay loop muted playsInline preload="auto" />
+            )}
+            {pages.length > 1 && (
+              <div className="mobile-dashboard__module-dots" aria-hidden="true">
+                {pages.map((page, index) => (
+                  <span key={page.id} className={cn(index === activePageIndex && 'is-active')} />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <span>{module.type === 'image' ? '暂无图片' : '暂无视频'}</span>
+        )}
+      </div>
+    </article>
+  );
+}
+
 function MountainRankingCanvas() {
   const { sortedDepartments, floatModules, isManualMode, resetToAutoRanking, departments, isEditMode, isLoadingCloud, theme } = useMountainRanking();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isMobileLandscape, setIsMobileLandscape] = useState(false);
   const [isTvDisplay, setIsTvDisplay] = useState(false);
+  const [viewportSize, setViewportSize] = useState({ width: 1920, height: 1080 });
 
   useEffect(() => {
     if (isManualMode) return;
@@ -34,6 +134,7 @@ function MountainRankingCanvas() {
       const viewport = window.visualViewport;
       const width = viewport?.width ?? window.innerWidth;
       const height = viewport?.height ?? window.innerHeight;
+      setViewportSize({ width, height });
       const hasTouch = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
       const isShortLandscape = width > height && height <= 720;
       setIsMobileLandscape(isShortLandscape && hasTouch);
@@ -57,6 +158,7 @@ function MountainRankingCanvas() {
       const viewport = window.visualViewport;
       const width = viewport?.width ?? window.innerWidth;
       const height = viewport?.height ?? window.innerHeight;
+      setViewportSize({ width, height });
       const ua = navigator.userAgent || '';
       const isAndroidTv = /Android/i.test(ua) && !/Mobile/i.test(ua);
       const isTvUa = /(TV|TCL|MiTV|MiBOX|BRAVIA|SmartTV|HbbTV|Web0S|NetCast|Hisense|AFT|AppleTV)/i.test(ua);
@@ -76,8 +178,9 @@ function MountainRankingCanvas() {
     };
   }, []);
 
+  const tvViewportScale = Math.max(0.68, Math.min(1.06, viewportSize.width / 1920));
   const baseCardScale = isTvDisplay
-    ? (isEditMode ? 0.76 : 1.58)
+    ? (isEditMode ? Math.max(0.62, tvViewportScale * 0.78) : tvViewportScale)
     : 1;
   const dashboardStyle = {
     '--ranking-card-scale': String(baseCardScale * (theme.labelScale ?? 1)),
@@ -226,33 +329,7 @@ function MountainRankingCanvas() {
           {floatModules.some((mod) => !mod.minimized) && (
             <section className="mobile-dashboard__modules">
               {floatModules.filter((mod) => !mod.minimized).map((mod) => (
-                <article
-                  key={mod.id}
-                  className="mobile-dashboard__module"
-                  style={{
-                    backgroundColor: theme.floatBgColor,
-                    borderColor: theme.floatBorderColor,
-                  }}
-                >
-                  <h2>{mod.title}</h2>
-                  <div className="mobile-dashboard__media">
-                    {mod.type === 'ticker' ? (
-                      <div className="mobile-dashboard__ticker">
-                        {(mod.scrollItems ?? []).slice(0, mod.visibleRows ?? 2).map((item) => (
-                          <div key={item.id}><strong>{item.name}</strong><span>{item.content}</span></div>
-                        ))}
-                      </div>
-                    ) : getFloatModuleContentUrl(mod) ? (
-                      mod.type === 'image' ? (
-                        <img src={getFloatModuleContentUrl(mod)} alt={mod.title} />
-                      ) : (
-                        <video src={getFloatModuleContentUrl(mod)} autoPlay loop muted playsInline preload="auto" />
-                      )
-                    ) : (
-                      <span>{mod.type === 'image' ? '暂无图片' : '暂无视频'}</span>
-                    )}
-                  </div>
-                </article>
+                <MobileFloatModuleCard key={mod.id} module={mod} theme={theme} />
               ))}
             </section>
           )}

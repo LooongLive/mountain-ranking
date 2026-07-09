@@ -440,7 +440,7 @@ export default function FloatModule({ module }: FloatModuleProps) {
                       </span>
                     </div>
                   </div>
-                  <div className="space-y-2">
+                  <div className="ticker-editor-list">
                     {scrollItems.map((item) => (
                       <div key={item.id} className="grid grid-cols-[78px_1fr_28px] gap-2">
                         <Input value={item.name} onChange={(e) => updateTickerItem(item.id, { name: e.target.value })} placeholder="姓名" />
