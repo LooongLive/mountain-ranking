@@ -117,8 +117,6 @@ function MountainRankingCanvas() {
   const { sortedDepartments, floatModules, isManualMode, resetToAutoRanking, departments, isEditMode, isLoadingCloud, theme } = useMountainRanking();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isMobileLandscape, setIsMobileLandscape] = useState(false);
-  const [isTvDisplay, setIsTvDisplay] = useState(false);
-  const [viewportSize, setViewportSize] = useState({ width: 1920, height: 1080 });
 
   useEffect(() => {
     if (isManualMode) return;
@@ -134,7 +132,6 @@ function MountainRankingCanvas() {
       const viewport = window.visualViewport;
       const width = viewport?.width ?? window.innerWidth;
       const height = viewport?.height ?? window.innerHeight;
-      setViewportSize({ width, height });
       const hasTouch = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
       const isShortLandscape = width > height && height <= 720;
       setIsMobileLandscape(isShortLandscape && hasTouch);
@@ -153,44 +150,9 @@ function MountainRankingCanvas() {
     };
   }, []);
 
-  useEffect(() => {
-    const detectTvDisplay = () => {
-      const viewport = window.visualViewport;
-      const width = viewport?.width ?? window.innerWidth;
-      const height = viewport?.height ?? window.innerHeight;
-      setViewportSize({ width, height });
-      const ua = navigator.userAgent || '';
-      const isAndroidTv = /Android/i.test(ua) && !/Mobile/i.test(ua);
-      const isTvUa = /(TV|TCL|MiTV|MiBOX|BRAVIA|SmartTV|HbbTV|Web0S|NetCast|Hisense|AFT|AppleTV)/i.test(ua);
-      setIsTvDisplay(width >= 960 && height >= 520 && (isAndroidTv || isTvUa));
-    };
-
-    detectTvDisplay();
-    const updateSoon = () => window.setTimeout(detectTvDisplay, 80);
-    window.addEventListener('resize', updateSoon);
-    window.addEventListener('orientationchange', updateSoon);
-    window.visualViewport?.addEventListener('resize', updateSoon);
-
-    return () => {
-      window.removeEventListener('resize', updateSoon);
-      window.removeEventListener('orientationchange', updateSoon);
-      window.visualViewport?.removeEventListener('resize', updateSoon);
-    };
-  }, []);
-
-  const tvViewportScale = Math.max(0.68, Math.min(1.06, viewportSize.width / 1920));
-  const baseCardScale = isTvDisplay
-    ? (isEditMode ? Math.max(0.62, tvViewportScale * 0.78) : tvViewportScale)
-    : 1;
-  const effectiveLabelScale = isTvDisplay
-    ? Math.min(Math.max(theme.labelScale ?? 1, 0.55), 1.18)
-    : (theme.labelScale ?? 1);
-  const effectiveLabelFontScale = isTvDisplay
-    ? Math.min(Math.max(theme.labelFontScale ?? 1, 0.7), 1.14)
-    : (theme.labelFontScale ?? 1);
   const dashboardStyle = {
-    '--ranking-card-scale': String(baseCardScale * effectiveLabelScale),
-    '--ranking-font-scale': String(effectiveLabelFontScale),
+    '--ranking-card-scale': String(theme.labelScale ?? 1),
+    '--ranking-font-scale': String(theme.labelFontScale ?? 1),
   } as React.CSSProperties;
 
   return (
@@ -200,7 +162,6 @@ function MountainRankingCanvas() {
         'mountain-dashboard relative w-full h-screen overflow-hidden bg-background',
         isEditMode ? 'is-editing' : 'is-preview',
         isMobileLandscape && 'is-mobile-landscape',
-        isTvDisplay && 'is-tv-display',
       )}
       style={dashboardStyle}
     >
@@ -215,7 +176,7 @@ function MountainRankingCanvas() {
       )}
       <div className="desktop-dashboard-layer">
         {sortedDepartments.map((dept) => (
-          <RankingLabel key={dept.id} department={dept} canvasRef={canvasRef} isTvDisplay={isTvDisplay} />
+          <RankingLabel key={dept.id} department={dept} canvasRef={canvasRef} />
         ))}
         {floatModules.map((mod) => (
           <FloatModule key={mod.id} module={mod} canvasRef={canvasRef} />
