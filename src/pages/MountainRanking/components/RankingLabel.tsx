@@ -9,9 +9,10 @@ import { useMountainRanking } from '@/context/MountainRankingContext';
 interface RankingLabelProps {
   department: IDepartment;
   canvasRef: React.RefObject<HTMLDivElement | null>;
+  isTvDisplay?: boolean;
 }
 
-export default function RankingLabel({ department, canvasRef }: RankingLabelProps) {
+export default function RankingLabel({ department, canvasRef, isTvDisplay = false }: RankingLabelProps) {
   const { isEditMode, isManualMode, updateDepartment, removeDepartment, updateDepartmentPosition,
     addAvatar, removeAvatar, updateAvatarPosition, theme, setTheme, uploadFile, sortedDepartments } = useMountainRanking();
 
@@ -54,8 +55,12 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
   const bubbleBlur = bubbleConfig.blur ?? theme.speechBubbleBlur ?? 22;
   const bubbleHoldSeconds = bubbleConfig.holdSeconds ?? theme.speechBubbleHoldSeconds ?? 2.6;
   const bubbleIntervalSeconds = bubbleConfig.intervalSeconds ?? theme.speechBubbleIntervalSeconds ?? 5;
-  const departmentCardScale = department.cardScale ?? 1;
-  const departmentCardFontScale = department.cardFontScale ?? 1;
+  const departmentCardScale = isTvDisplay
+    ? Math.min(Math.max(department.cardScale ?? 1, 0.55), 1.18)
+    : (department.cardScale ?? 1);
+  const departmentCardFontScale = isTvDisplay
+    ? Math.min(Math.max(department.cardFontScale ?? 1, 0.7), 1.14)
+    : (department.cardFontScale ?? 1);
   const speechBubblePositions: Array<typeof activeBubblePosition> = ['top', 'right', 'bottom', 'left', 'top-right', 'top-left'];
 
   useEffect(() => {

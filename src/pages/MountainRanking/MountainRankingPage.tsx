@@ -182,9 +182,15 @@ function MountainRankingCanvas() {
   const baseCardScale = isTvDisplay
     ? (isEditMode ? Math.max(0.62, tvViewportScale * 0.78) : tvViewportScale)
     : 1;
+  const effectiveLabelScale = isTvDisplay
+    ? Math.min(Math.max(theme.labelScale ?? 1, 0.55), 1.18)
+    : (theme.labelScale ?? 1);
+  const effectiveLabelFontScale = isTvDisplay
+    ? Math.min(Math.max(theme.labelFontScale ?? 1, 0.7), 1.14)
+    : (theme.labelFontScale ?? 1);
   const dashboardStyle = {
-    '--ranking-card-scale': String(baseCardScale * (theme.labelScale ?? 1)),
-    '--ranking-font-scale': String(theme.labelFontScale ?? 1),
+    '--ranking-card-scale': String(baseCardScale * effectiveLabelScale),
+    '--ranking-font-scale': String(effectiveLabelFontScale),
   } as React.CSSProperties;
 
   return (
@@ -209,7 +215,7 @@ function MountainRankingCanvas() {
       )}
       <div className="desktop-dashboard-layer">
         {sortedDepartments.map((dept) => (
-          <RankingLabel key={dept.id} department={dept} canvasRef={canvasRef} />
+          <RankingLabel key={dept.id} department={dept} canvasRef={canvasRef} isTvDisplay={isTvDisplay} />
         ))}
         {floatModules.map((mod) => (
           <FloatModule key={mod.id} module={mod} canvasRef={canvasRef} />
