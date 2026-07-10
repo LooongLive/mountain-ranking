@@ -93,6 +93,8 @@ export interface IThemeConfig {
   subTitleColor: string;
   mainTitleSize: number;
   subTitleSize: number;
+  titlePositionX: number;
+  titlePositionY: number;
   backgroundImage: string;
   backgroundVideo: string;
   pathStyle: PathStyle;

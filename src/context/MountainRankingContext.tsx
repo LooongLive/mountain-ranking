@@ -35,6 +35,8 @@ const INITIAL_THEME: IThemeConfig = {
   subTitleColor: 'hsl(222 47% 28%)',
   mainTitleSize: 42,
   subTitleSize: 20,
+  titlePositionX: 960,
+  titlePositionY: 42,
   backgroundImage: DEFAULT_BG,
   backgroundVideo: '',
   pathStyle: 'dashed',

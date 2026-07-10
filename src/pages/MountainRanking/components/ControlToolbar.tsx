@@ -520,6 +520,47 @@ export default function ControlToolbar() {
               <div className="flex items-center justify-between"><Label>副标题字号</Label><span className="text-xs text-muted-foreground tabular-nums">{theme.subTitleSize}px</span></div>
               <Slider value={[theme.subTitleSize]} min={12} max={40} step={1} onValueChange={([v]) => setTheme((prev) => ({ ...prev, subTitleSize: v }))} />
             </div>
+            <div className="space-y-3 rounded-xl border border-border/60 bg-background/40 p-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium text-foreground">标题位置</div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setTheme((prev) => ({ ...prev, titlePositionX: 960, titlePositionY: 42 }))}
+                >
+                  回到顶部居中
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">横向位置</Label>
+                  <span className="text-xs text-muted-foreground tabular-nums">{Math.round(theme.titlePositionX ?? 960)}</span>
+                </div>
+                <Slider
+                  value={[theme.titlePositionX ?? 960]}
+                  min={160}
+                  max={1760}
+                  step={1}
+                  onValueChange={([v]) => setTheme((prev) => ({ ...prev, titlePositionX: v }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">纵向位置</Label>
+                  <span className="text-xs text-muted-foreground tabular-nums">{Math.round(theme.titlePositionY ?? 42)}</span>
+                </div>
+                <Slider
+                  value={[theme.titlePositionY ?? 42]}
+                  min={0}
+                  max={320}
+                  step={1}
+                  onValueChange={([v]) => setTheme((prev) => ({ ...prev, titlePositionY: v }))}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">也可以在编辑模式下直接拖动标题。</p>
+            </div>
             <div className="space-y-3 pt-2 border-t border-border/60">
               <div className="text-sm font-medium text-foreground">部门标签样式</div>
               <div className="flex items-center justify-between">

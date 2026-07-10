@@ -423,6 +423,7 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
         style={{
           '--card-glass-bg': theme.labelBgColor,
           '--label-glass-blur': `${theme.labelBlur ?? 35}px`,
+          backgroundColor: theme.labelBgColor,
           background:
             `linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.08) 48%, rgba(255,255,255,0.18)), ${theme.labelBgColor}`,
           borderColor: theme.labelShowBorder ? theme.labelBorderColor : 'transparent',

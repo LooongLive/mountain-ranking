@@ -484,9 +484,10 @@
   isolation: isolate;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: calc(var(--ticker-visible-rows, 2) * var(--ticker-row-height, 42px) + 20px);
-  padding: 10px;
+  gap: 0;
+  min-height: calc(var(--ticker-visible-rows, 2) * var(--ticker-row-height, 42px));
+  height: calc(var(--ticker-visible-rows, 2) * var(--ticker-row-height, 42px));
+  padding: 0;
   color: hsl(222 47% 16%);
   font-size: var(--ticker-font-size, 15px);
 }
@@ -571,7 +572,7 @@
   pointer-events: none;
   border-radius: inherit;
   box-shadow:
-    0 0 80px rgba(0, 0, 0, 0.25),
+    0 0 80px rgba(0, 0, 0, calc(var(--ticker-glass-highlight, 1) * 0.25)),
     inset 0 1px 0 rgba(255, 255, 255, calc(var(--ticker-glass-highlight, 1) * 0.48)),
     inset 0 -18px 42px rgba(255, 255, 255, calc(var(--ticker-glass-highlight, 1) * 0.08));
 }
@@ -581,12 +582,22 @@
   z-index: 1;
 }
 
+.float-module--editing-announcement {
+  overflow: visible !important;
+}
+
+.float-module--editing-ticker {
+  overflow: visible !important;
+}
+
 .ticker-viewport {
   position: relative;
-  height: calc(var(--ticker-visible-rows, 2) * var(--ticker-row-height, 42px));
+  width: 100%;
+  height: 100%;
+  min-height: calc(var(--ticker-visible-rows, 2) * var(--ticker-row-height, 42px));
   overflow: hidden;
-  border-radius: 20px;
-  border: 2px solid rgba(255, 255, 255, var(--ticker-inner-border-opacity, 0.24));
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, var(--ticker-inner-border-opacity, 0.24));
   background:
     linear-gradient(135deg, rgba(255, 255, 255, calc(var(--ticker-glass-highlight, 1) * 0.28)), rgba(255, 255, 255, calc(var(--ticker-glass-highlight, 1) * 0.08)) 48%, rgba(255, 255, 255, calc(var(--ticker-glass-highlight, 1) * 0.18))),
     var(--ticker-glass-bg, rgba(255, 255, 255, 0.32));
@@ -598,10 +609,11 @@
 }
 
 .ticker-track {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 5px;
+  gap: 0;
+  padding: 0;
 }
 
 .ticker-track.is-scrolling {
@@ -612,25 +624,22 @@
   display: grid;
   grid-template-columns: minmax(64px, 0.32fr) 1fr;
   align-items: center;
-  min-height: calc(var(--ticker-row-height, 42px) - 10px);
-  gap: 10px;
-  padding: 6px 11px;
-  border: 1px solid rgba(255, 255, 255, var(--ticker-row-border-opacity, 0.38));
-  border-radius: 16px;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, calc(var(--ticker-glass-highlight, 1) * 0.28)), rgba(255, 255, 255, calc(var(--ticker-glass-highlight, 1) * 0.08)) 48%, rgba(255, 255, 255, calc(var(--ticker-glass-highlight, 1) * 0.18))),
-    var(--ticker-glass-bg, rgba(255, 255, 255, 0.32));
-  box-shadow:
-    0 10px 26px rgba(0, 0, 0, calc(var(--ticker-glass-highlight, 1) * 0.12)),
-    inset 0 1px 0 rgba(255, 255, 255, calc(var(--ticker-glass-highlight, 1) * 0.42));
-  -webkit-backdrop-filter: blur(var(--ticker-glass-blur, 26px)) saturate(1.35);
-  backdrop-filter: blur(var(--ticker-glass-blur, 26px)) saturate(1.35);
+  min-height: var(--ticker-row-height, 42px);
+  gap: 8px;
+  overflow: visible;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
 }
 
 .ticker-row strong {
   font-weight: 800;
   white-space: nowrap;
   letter-spacing: 0;
+  line-height: 1.35;
+  text-align: center;
 }
 
 .ticker-row span {
@@ -638,22 +647,31 @@
   overflow-wrap: anywhere;
   line-height: 1.35;
   font-weight: 650;
+  text-align: left;
 }
 
 .ticker-editor {
+  position: absolute;
+  z-index: 28;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
+  width: min(302px, 30vw);
+  max-height: min(88vh, 390px);
+  overflow: auto;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.84);
-  padding: 10px;
+  padding: 8px;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
 }
 
 .ticker-editor-list {
   display: grid;
-  gap: 8px;
-  max-height: min(188px, 34vh);
+  gap: 5px;
+  max-height: 160px;
+  min-height: 154px;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: 4px;
@@ -667,6 +685,42 @@
 .ticker-editor-list::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.28);
+}
+
+.ticker-editor-row {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr) 24px;
+  align-items: start;
+  gap: 5px;
+  min-height: 48px;
+}
+
+.ticker-editor-row input,
+.ticker-editor-row textarea {
+  width: 100%;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--input));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 10.5px;
+}
+
+.ticker-editor-row input {
+  height: 34px;
+  padding: 0 7px;
+}
+
+.ticker-editor-row textarea {
+  height: 48px;
+  resize: vertical;
+  padding: 6px 7px;
+  line-height: 1.25;
+}
+
+.ticker-editor-row button {
+  width: 24px;
+  height: 30px;
 }
 
 .module-shadow-editor {
@@ -684,9 +738,61 @@
   backdrop-filter: blur(16px);
 }
 
+.module-shadow-controls {
+  display: grid;
+  gap: 7px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  margin-top: 2px;
+  padding-top: 8px;
+}
+
+.module-editor-section-title {
+  color: hsl(222 47% 18%);
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .float-module--ticker .module-shadow-editor {
-  position: static;
-  margin: 0 14px 14px;
+  position: absolute;
+  margin: 0;
+}
+
+.float-module--editing-announcement .module-shadow-editor,
+.float-module--editing-ticker .module-shadow-editor {
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: min(320px, 32vw);
+  max-width: none;
+}
+
+.float-module--panel-right.float-module--editing-announcement .module-shadow-editor,
+.float-module--panel-right.float-module--editing-ticker .module-shadow-editor {
+  left: calc(100% + 12px);
+  right: auto;
+}
+
+.float-module--panel-left.float-module--editing-announcement .module-shadow-editor,
+.float-module--panel-left.float-module--editing-ticker .module-shadow-editor {
+  left: auto;
+  right: calc(100% + 12px);
+}
+
+.float-module--panel-top.float-module--editing-announcement .module-shadow-editor,
+.float-module--panel-top.float-module--editing-ticker .module-shadow-editor {
+  top: calc(100% + 12px);
+  bottom: auto;
+}
+
+.float-module--panel-bottom.float-module--editing-announcement .module-shadow-editor,
+.float-module--panel-bottom.float-module--editing-ticker .module-shadow-editor {
+  top: auto;
+  bottom: calc(100% + 12px);
+}
+
+.float-module--editing-ticker .module-shadow-editor {
+  max-height: min(38vh, 220px);
+  overflow: auto;
 }
 
 .landscape-dashboard__ticker,
@@ -1413,15 +1519,13 @@ body,
 
 .announcement-carousel-editor {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 44px;
   z-index: 28;
   display: grid;
-  gap: 8px;
-  max-height: min(70%, 220px);
+  gap: 7px;
+  width: min(326px, 32vw);
+  max-height: min(88vh, 430px);
   overflow: auto;
-  padding: 10px;
+  padding: 9px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 14px;
   background:
@@ -1431,17 +1535,59 @@ body,
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.2);
 }
 
+.float-module--panel-right .announcement-carousel-editor,
+.float-module--panel-right .ticker-editor {
+  left: calc(100% + 12px);
+  right: auto;
+}
+
+.float-module--panel-left .announcement-carousel-editor,
+.float-module--panel-left .ticker-editor {
+  left: auto;
+  right: calc(100% + 12px);
+}
+
+.float-module--panel-top .announcement-carousel-editor,
+.float-module--panel-top .ticker-editor {
+  top: 0;
+  bottom: auto;
+}
+
+.float-module--panel-bottom .announcement-carousel-editor,
+.float-module--panel-bottom .ticker-editor {
+  top: auto;
+  bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .float-module--panel-right .announcement-carousel-editor,
+  .float-module--panel-right .ticker-editor,
+  .float-module--panel-left .announcement-carousel-editor,
+  .float-module--panel-left .ticker-editor {
+    left: 0;
+    right: auto;
+    width: min(360px, 92vw);
+  }
+
+  .float-module--editing-announcement .module-shadow-editor,
+  .float-module--editing-ticker .module-shadow-editor {
+    left: 0 !important;
+    right: auto !important;
+    width: min(320px, 92vw);
+  }
+}
+
 .announcement-page-list {
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 .announcement-page-row {
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto auto minmax(76px, 1fr) auto;
   align-items: center;
-  gap: 6px;
-  padding: 6px;
+  gap: 5px;
+  padding: 5px;
   border: 1px solid rgba(255, 255, 255, 0.42);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.38);

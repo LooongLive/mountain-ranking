@@ -29,7 +29,7 @@ function MobileFloatModuleCard({ module, theme }: { module: IFloatModule; theme:
   const scrollItems = module.scrollItems ?? [];
   const shouldScroll = scrollItems.length > visibleRows && scrollItems.length > 2;
   const tickerRows = shouldScroll ? [...scrollItems, ...scrollItems] : scrollItems;
-  const tickerSpeed = Math.max(4, Math.min(90, module.tickerSpeed ?? 12));
+  const tickerSpeed = Math.max(4, Math.min(240, module.tickerSpeed ?? 12));
   const tickerFontSize = Math.max(10, Math.min(36, module.tickerFontSize ?? 15));
 
   useEffect(() => {
