@@ -22,7 +22,7 @@ fi
 git branch -M main
 git add .
 git commit -m "Deploy mountain ranking dashboard" || true
-git push -u origin main
+git -c http.version=HTTP/1.1 push -u origin main
 
 rm -rf "$PAGES_DIR"
 mkdir -p "$PAGES_DIR"
@@ -34,7 +34,7 @@ git -C "$PAGES_DIR" remote add origin "$REMOTE_URL"
 git -C "$PAGES_DIR" checkout -B gh-pages
 git -C "$PAGES_DIR" add .
 git -C "$PAGES_DIR" commit -m "Deploy GitHub Pages"
-git -C "$PAGES_DIR" push --force origin gh-pages
+git -C "$PAGES_DIR" -c http.version=HTTP/1.1 push --force origin gh-pages
 
 echo
 echo "GitHub Pages files pushed."
