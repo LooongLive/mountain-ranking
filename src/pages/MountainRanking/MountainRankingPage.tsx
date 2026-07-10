@@ -133,8 +133,8 @@ function MountainRankingCanvas() {
       const width = viewport?.width ?? window.innerWidth;
       const height = viewport?.height ?? window.innerHeight;
       const hasTouch = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
-      const isShortLandscape = width > height && height <= 720;
-      setIsMobileLandscape(isShortLandscape && hasTouch);
+      const isPhoneLandscape = width > height && width <= 1180 && height <= 520;
+      setIsMobileLandscape(isPhoneLandscape && hasTouch);
     };
 
     detectMobileLandscape();
