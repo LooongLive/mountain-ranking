@@ -1132,6 +1132,7 @@ body,
     position: fixed;
   }
 
+  .mountain-dashboard.is-preview .title-header-layer,
   .mountain-dashboard.is-preview .desktop-dashboard-layer,
   .mountain-dashboard.is-preview > .absolute.inset-0.pointer-events-none,
   .mountain-dashboard.is-preview > .absolute.top-0.left-0.right-0 {
@@ -1164,26 +1165,32 @@ body,
   .mobile-dashboard__header {
     text-align: center;
     text-wrap: balance;
-    margin-bottom: 18px;
+    margin: 0 auto 18px;
+    max-width: 360px;
+    border-radius: 18px;
+    padding: 12px 14px 10px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.08));
+    -webkit-backdrop-filter: blur(10px) saturate(1.1);
+    backdrop-filter: blur(10px) saturate(1.1);
   }
 
   .mobile-dashboard__header h1 {
     margin: 0;
-    font-size: clamp(24px, 7.2vw, 34px);
-    line-height: 1.18;
+    font-size: clamp(22px, 6.2vw, 30px);
+    line-height: 1.12;
     font-weight: 800;
     letter-spacing: 0;
-    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
+    text-shadow: 0 2px 12px rgba(255, 255, 255, 0.72);
   }
 
   .mobile-dashboard__header p {
-    margin: 8px auto 0;
-    max-width: 32em;
-    font-size: clamp(12px, 3.5vw, 15px);
-    line-height: 1.35;
+    margin: 6px auto 0;
+    max-width: 26em;
+    font-size: clamp(11px, 3vw, 13px);
+    line-height: 1.25;
     font-weight: 600;
     letter-spacing: 0;
-    opacity: 0.9;
+    opacity: 0.88;
     text-shadow: 0 1px 8px rgba(255, 255, 255, 0.75);
   }
 
@@ -1377,6 +1384,32 @@ body,
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     touch-action: pan-y;
+  }
+
+  .mobile-dashboard__ticker .ticker-row {
+    grid-template-columns: minmax(52px, 0.34fr) minmax(0, 1fr);
+    gap: 8px;
+    min-height: max(42px, var(--ticker-row-height, 42px));
+    padding: 8px 10px;
+  }
+
+  .mobile-dashboard__ticker .ticker-row strong {
+    align-self: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: keep-all;
+    line-height: 1.25;
+    text-align: center;
+  }
+
+  .mobile-dashboard__ticker .ticker-row span {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.35;
+    text-align: left;
   }
 
   .mobile-dashboard__ticker-viewport .ticker-track {
