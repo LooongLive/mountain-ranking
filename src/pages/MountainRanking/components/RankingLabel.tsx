@@ -57,6 +57,11 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
   const departmentCardScale = department.cardScale ?? 1;
   const departmentCardFontScale = department.cardFontScale ?? 1;
   const speechBubblePositions: Array<typeof activeBubblePosition> = ['top', 'right', 'bottom', 'left', 'top-right', 'top-left'];
+  const updatePercentScale = (field: 'cardScale' | 'cardFontScale', value: string, min: number, max: number) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return;
+    updateDepartment(department.id, { [field]: clamp(numericValue / 100, min, max) });
+  };
 
   useEffect(() => {
     if (!theme.speechBubblesEnabled || !bubbleEnabled || bubbleMessages.length === 0) {
@@ -385,7 +390,18 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
           >
             <label>
               单卡尺寸
-              <span>{Math.round(departmentCardScale * 100)}%</span>
+              <span className="department-card-editor__percent">
+                <input
+                  type="number"
+                  min={55}
+                  max={280}
+                  step={1}
+                  value={Math.round(departmentCardScale * 100)}
+                  onChange={(e) => updatePercentScale('cardScale', e.target.value, 0.55, 2.8)}
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+                %
+              </span>
               <input
                 type="range"
                 min="0.55"
@@ -397,7 +413,18 @@ export default function RankingLabel({ department, canvasRef }: RankingLabelProp
             </label>
             <label>
               单卡字体
-              <span>{Math.round(departmentCardFontScale * 100)}%</span>
+              <span className="department-card-editor__percent">
+                <input
+                  type="number"
+                  min={70}
+                  max={260}
+                  step={1}
+                  value={Math.round(departmentCardFontScale * 100)}
+                  onChange={(e) => updatePercentScale('cardFontScale', e.target.value, 0.7, 2.6)}
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+                %
+              </span>
               <input
                 type="range"
                 min="0.7"
