@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { IDepartment, IFloatModule, IThemeConfig } from '@/types/mountain-ranking';
+import type { IDepartment, IFloatModule, IInfoPageConfig, IThemeConfig } from '@/types/mountain-ranking';
 import { generateId } from '@/lib/utils';
 import {
   isCloudConfigured,
@@ -15,6 +15,7 @@ const STORAGE_KEYS = {
   floatModules: '__mountain_ranking_modules',
   theme: '__mountain_ranking_theme',
   isManualMode: '__mountain_ranking_manual_mode',
+  infoPage: '__mountain_ranking_info_page',
 };
 
 const DEFAULT_BG = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80';
@@ -76,6 +77,38 @@ const INITIAL_FLOAT_MODULES: IFloatModule[] = [
   { id: 'mod_2', type: 'video', title: '改善案例视频', contentUrl: '', position: { x: 360, y: 260 }, size: { width: 480, height: 270 }, minimized: false, orientation: 'landscape', shadow: { x: 0, y: 16, blur: 36, opacity: 0.24 } },
 ];
 
+const INITIAL_INFO_PAGE: IInfoPageConfig = {
+  enabled: true,
+  backgroundImage: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1920&q=80',
+  backgroundVideo: '',
+  mainTitle: '信息展示',
+  subTitle: 'Customer Visits & Audit Calendar',
+  mainTitleColor: '#f8fafc',
+  subTitleColor: '#dbeafe',
+  mainTitleSize: 72,
+  subTitleSize: 20,
+  titlePositionX: 4,
+  titlePositionY: 5,
+  rankingHoldSeconds: 38,
+  infoHoldSeconds: 28,
+  autoSwitchEnabled: true,
+  switchTransition: 'fade',
+  agendaItems: [
+    {
+      id: generateId('agenda'),
+      date: new Date().toISOString().slice(0, 10),
+      startTime: '09:00',
+      endTime: '10:30',
+      title: '客户来访准备',
+      owner: '总部接待',
+      location: '一楼会议室',
+      note: '提前确认展厅与会议设备。',
+      color: '#60a5fa',
+    },
+  ],
+  floatModules: [],
+};
+
 function loadFromStorage<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
@@ -99,6 +132,7 @@ interface MountainRankingContextValue {
   sortedDepartments: IDepartment[];
   floatModules: IFloatModule[];
   theme: IThemeConfig;
+  infoPage: IInfoPageConfig;
   isEditMode: boolean;
   isEditAuthorized: boolean;
   isManualMode: boolean;
@@ -109,11 +143,13 @@ interface MountainRankingContextValue {
   setDepartments: (depts: IDepartment[] | ((prev: IDepartment[]) => IDepartment[])) => void;
   setFloatModules: (mods: IFloatModule[] | ((prev: IFloatModule[]) => IFloatModule[])) => void;
   setTheme: (theme: IThemeConfig | ((prev: IThemeConfig) => IThemeConfig)) => void;
+  setInfoPage: (info: IInfoPageConfig | ((prev: IInfoPageConfig) => IInfoPageConfig)) => void;
   setIsEditMode: (v: boolean) => void;
   setIsManualMode: (v: boolean) => void;
   unlockEditing: (password: string) => Promise<boolean>;
   lockEditing: () => void;
   saveToCloud: () => Promise<void>;
+  saveToCloudWithPassword: (password: string) => Promise<void>;
   uploadFile: (file: File, folder: string) => Promise<string>;
   addDepartment: () => void;
   removeDepartment: (id: string) => void;
@@ -144,6 +180,11 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
     if (!stored) return INITIAL_THEME;
     return { ...INITIAL_THEME, ...stored };
   });
+  const [infoPage, setInfoPageState] = useState<IInfoPageConfig>(() => {
+    const stored = loadFromStorage<Partial<IInfoPageConfig> | null>(STORAGE_KEYS.infoPage, null);
+    if (!stored) return INITIAL_INFO_PAGE;
+    return { ...INITIAL_INFO_PAGE, ...stored };
+  });
   const [isEditMode, setIsEditModeState] = useState(false);
   const [isEditAuthorized, setIsEditAuthorized] = useState(false);
   const [editPassword, setEditPassword] = useState('');
@@ -159,6 +200,7 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
     if (data.departments) setDepartmentsState(data.departments);
     if (data.floatModules) setFloatModulesState(data.floatModules);
     if (data.theme) setThemeState({ ...INITIAL_THEME, ...data.theme });
+    if (data.infoPage) setInfoPageState({ ...INITIAL_INFO_PAGE, ...data.infoPage });
     if (typeof data.isManualMode === 'boolean') setIsManualModeState(data.isManualMode);
   };
 
@@ -197,6 +239,7 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
   useEffect(() => { saveToStorage(STORAGE_KEYS.departments, departments); }, [departments]);
   useEffect(() => { saveToStorage(STORAGE_KEYS.floatModules, floatModules); }, [floatModules]);
   useEffect(() => { saveToStorage(STORAGE_KEYS.theme, theme); }, [theme]);
+  useEffect(() => { saveToStorage(STORAGE_KEYS.infoPage, infoPage); }, [infoPage]);
   useEffect(() => { saveToStorage(STORAGE_KEYS.isManualMode, isManualMode); }, [isManualMode]);
 
   const sortedDepartments = useMemo(
@@ -228,6 +271,14 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setInfoPage: MountainRankingContextValue['setInfoPage'] = (updater) => {
+    if (typeof updater === 'function') {
+      setInfoPageState((prev) => (updater as (prev: IInfoPageConfig) => IInfoPageConfig)(prev));
+    } else {
+      setInfoPageState(updater);
+    }
+  };
+
   const setIsEditMode = (value: boolean) => {
     if (value && !isEditAuthorized) return;
     setIsEditModeState(value);
@@ -256,6 +307,7 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
     floatModules,
     theme,
     isManualMode,
+    infoPage,
   });
 
   const saveToCloud = async () => {
@@ -263,6 +315,20 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
     setCloudMessage('正在保存到云端...');
     try {
       await saveDashboardToCloud(getDashboardData(), editPassword);
+      setSaveStatus('saved');
+      setCloudMessage('已保存到云端。');
+    } catch (error) {
+      setSaveStatus('error');
+      setCloudMessage(error instanceof Error ? error.message : '保存失败。');
+      throw error;
+    }
+  };
+
+  const saveToCloudWithPassword = async (password: string) => {
+    setSaveStatus('saving');
+    setCloudMessage('正在保存到云端...');
+    try {
+      await saveDashboardToCloud(getDashboardData(), password);
       setSaveStatus('saved');
       setCloudMessage('已保存到云端。');
     } catch (error) {
@@ -417,6 +483,7 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
     sortedDepartments,
     floatModules,
     theme,
+    infoPage,
     isEditMode,
     isEditAuthorized,
     isManualMode,
@@ -427,11 +494,13 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
     setDepartments,
     setFloatModules,
     setTheme,
+    setInfoPage,
     setIsEditMode,
     setIsManualMode: setIsManualModeState,
     unlockEditing,
     lockEditing,
     saveToCloud,
+    saveToCloudWithPassword,
     uploadFile,
     addDepartment,
     removeDepartment,

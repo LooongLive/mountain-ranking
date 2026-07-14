@@ -1,10 +1,11 @@
-import type { IDepartment, IFloatModule, IThemeConfig } from '@/types/mountain-ranking';
+import type { IDepartment, IFloatModule, IInfoPageConfig, IThemeConfig } from '@/types/mountain-ranking';
 
 export interface DashboardData {
   departments: IDepartment[];
   floatModules: IFloatModule[];
   theme: IThemeConfig;
   isManualMode: boolean;
+  infoPage?: IInfoPageConfig;
 }
 
 interface CloudConfig {
@@ -146,4 +147,3 @@ export async function uploadDashboardFile(file: File, password: string, folder: 
   if (!result.url) throw new Error('上传成功但没有返回文件地址。');
   return result.url;
 }
-

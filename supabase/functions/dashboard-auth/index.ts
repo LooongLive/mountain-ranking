@@ -11,8 +11,9 @@ Deno.serve(async (request) => {
 
   const password = request.headers.get('x-edit-password') || '';
   const expectedPassword = Deno.env.get('EDIT_PASSWORD') || '';
+  const expectedInfoPassword = Deno.env.get('INFO_EDIT_PASSWORD') || '';
 
-  if (!expectedPassword || password !== expectedPassword) {
+  if ((!expectedPassword || password !== expectedPassword) && (!expectedInfoPassword || password !== expectedInfoPassword)) {
     return new Response('Unauthorized', { status: 401, headers: corsHeaders });
   }
 
@@ -20,4 +21,3 @@ Deno.serve(async (request) => {
     headers: { ...corsHeaders, 'content-type': 'application/json' },
   });
 });
-

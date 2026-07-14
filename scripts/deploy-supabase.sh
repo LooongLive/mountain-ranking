@@ -12,10 +12,10 @@ fi
 
 "$SUPABASE" db push
 "$SUPABASE" secrets set EDIT_PASSWORD="$EDIT_PASSWORD"
+"$SUPABASE" secrets set INFO_EDIT_PASSWORD="${INFO_EDIT_PASSWORD:-MyAgenda2026!}"
 "$SUPABASE" secrets set MEDIA_BUCKET="dashboard-media"
 "$SUPABASE" functions deploy dashboard-auth
 "$SUPABASE" functions deploy dashboard-save
 "$SUPABASE" functions deploy dashboard-upload
 
 echo "Supabase database, secrets, and functions deployed."
-

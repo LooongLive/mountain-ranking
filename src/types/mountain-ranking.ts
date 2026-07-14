@@ -84,6 +84,39 @@ export interface IFloatModule {
   shadow?: IModuleShadow;
 }
 
+export interface IAgendaItem {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  title: string;
+  owner: string;
+  location: string;
+  note: string;
+  color: string;
+}
+
+export interface IInfoPageConfig {
+  enabled: boolean;
+  backgroundImage: string;
+  backgroundVideo: string;
+  backgroundGradient?: string;
+  mainTitle: string;
+  subTitle: string;
+  mainTitleColor: string;
+  subTitleColor: string;
+  mainTitleSize: number;
+  subTitleSize: number;
+  titlePositionX: number;
+  titlePositionY: number;
+  rankingHoldSeconds: number;
+  infoHoldSeconds: number;
+  autoSwitchEnabled: boolean;
+  switchTransition: 'fade' | 'slide' | 'glass' | 'zoom';
+  agendaItems: IAgendaItem[];
+  floatModules: IFloatModule[];
+}
+
 export type PathStyle = 'dashed' | 'footprint' | 'dots' | 'wave' | 'solid' | 'arrow';
 
 export interface IThemeConfig {

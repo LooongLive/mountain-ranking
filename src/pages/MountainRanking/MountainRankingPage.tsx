@@ -7,6 +7,7 @@ import PathMeteorLayer from './components/PathMeteorLayer';
 import TitleHeader from './components/TitleHeader';
 import FloatModule from './components/FloatModule';
 import ControlToolbar from './components/ControlToolbar';
+import InfoDisplayPage from './components/InfoDisplayPage';
 import { cn } from '@/lib/utils';
 import type { IFloatModule } from '@/types/mountain-ranking';
 
@@ -307,10 +308,43 @@ function MountainRankingCanvas() {
   );
 }
 
+function ShowcaseShell() {
+  const { infoPage, isEditMode } = useMountainRanking();
+  const [activePage, setActivePage] = useState<'ranking' | 'info'>('ranking');
+  const [isInfoEditing, setIsInfoEditing] = useState(false);
+
+  useEffect(() => {
+    if (!infoPage.enabled || !infoPage.autoSwitchEnabled || isEditMode || isInfoEditing) return;
+    const delay = (activePage === 'ranking' ? infoPage.rankingHoldSeconds : infoPage.infoHoldSeconds) * 1000;
+    const timer = window.setTimeout(() => {
+      setActivePage((page) => (page === 'ranking' ? 'info' : 'ranking'));
+    }, Math.max(5, delay / 1000) * 1000);
+    return () => window.clearTimeout(timer);
+  }, [activePage, infoPage.autoSwitchEnabled, infoPage.enabled, infoPage.infoHoldSeconds, infoPage.rankingHoldSeconds, isEditMode, isInfoEditing]);
+
+  if (!infoPage.enabled) return <MountainRankingCanvas />;
+
+  return (
+    <div className="showcase-shell">
+      <div key={activePage} className={cn('showcase-page', `showcase-page--${infoPage.switchTransition ?? 'fade'}`)}>
+        {activePage === 'ranking' ? <MountainRankingCanvas /> : <InfoDisplayPage active onEditingChange={setIsInfoEditing} />}
+      </div>
+      <nav className="showcase-switcher" aria-label="页面切换">
+        <button type="button" className={cn(activePage === 'ranking' && 'is-active')} onClick={() => setActivePage('ranking')}>
+          <span>改善排名</span>
+        </button>
+        <button type="button" className={cn(activePage === 'info' && 'is-active')} onClick={() => setActivePage('info')}>
+          <span>信息展示</span>
+        </button>
+      </nav>
+    </div>
+  );
+}
+
 export default function MountainRankingPage() {
   return (
     <MountainRankingProvider>
-      <MountainRankingCanvas />
+      <ShowcaseShell />
     </MountainRankingProvider>
   );
 }

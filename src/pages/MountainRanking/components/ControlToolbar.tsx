@@ -12,7 +12,6 @@ import {
   Type,
   Route,
   Save,
-  LockKeyhole,
   LogOut,
   Camera,
   Sparkles,
@@ -156,8 +155,11 @@ export default function ControlToolbar() {
       {!isEditAuthorized ? (
         <Dialog open={authOpen} onOpenChange={setAuthOpen}>
           <DialogTrigger asChild>
-            <Button variant="secondary" size="sm" className="shadow-md">
-              <LockKeyhole className="mr-1.5 h-4 w-4" />编辑登录
+            <Button variant="secondary" size="sm" className="jump-login-button shadow-md" aria-label="Join">
+              <span aria-hidden="true">Join</span>
+              <span aria-hidden="true">Join</span>
+              <span aria-hidden="true">Join</span>
+              <span aria-hidden="true">Join</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="settings-glass-panel sm:max-w-sm">
