@@ -107,6 +107,9 @@ export async function saveDashboardToCloud(data: DashboardData, password: string
 
   if (!response.ok) {
     const message = await response.text();
+    if (response.status === 401 || message.trim().toLowerCase() === 'unauthorized') {
+      throw new Error('云端保存未授权：请重新登录编辑模式后再保存；如果仍然出现，请同步 Supabase 的编辑密码密钥。');
+    }
     throw new Error(message || `云端保存失败：${response.status}`);
   }
 }
@@ -140,6 +143,9 @@ export async function uploadDashboardFile(file: File, password: string, folder: 
 
   if (!response.ok) {
     const message = await response.text();
+    if (response.status === 401 || message.trim().toLowerCase() === 'unauthorized') {
+      throw new Error('云端上传未授权：请重新登录编辑模式后再上传；如果仍然出现，请同步 Supabase 的编辑密码密钥。');
+    }
     throw new Error(message || `文件上传失败：${response.status}`);
   }
 

@@ -67,6 +67,11 @@ export default function ControlToolbar() {
   const [authError, setAuthError] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [settingsDialog, setSettingsDialog] = useState<SettingsDialog>(null);
+  const isUnauthorizedMessage = /unauthorized|未授权/i.test(cloudMessage);
+  const toolbarCloudMessage = isUnauthorizedMessage ? '云端未授权，请重新登录后保存。' : cloudMessage;
+  const shouldShowCloudMessage = Boolean(
+    cloudMessage && (isEditAuthorized || saveStatus === 'saving' || saveStatus === 'saved'),
+  );
 
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -194,7 +199,7 @@ export default function ControlToolbar() {
         </>
       )}
 
-      {cloudMessage && <div className="hidden xl:block max-w-72 truncate rounded-md border border-border bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">{cloudMessage}</div>}
+      {shouldShowCloudMessage && <div className="hidden xl:block max-w-72 truncate rounded-md border border-border bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">{toolbarCloudMessage}</div>}
 
       {isEditAuthorized && isEditMode && (
         <>

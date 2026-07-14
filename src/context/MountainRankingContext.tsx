@@ -236,6 +236,27 @@ export function MountainRankingProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCloudReady]);
 
+  useEffect(() => {
+    const shouldAutoClear =
+      cloudMessage.includes('已保存到云端') ||
+      cloudMessage.includes('已加载云端最新数据') ||
+      cloudMessage.includes('已加载服务器数据');
+
+    if (!shouldAutoClear) return;
+
+    const timer = window.setTimeout(() => {
+      setCloudMessage((current) => {
+        const isSameSuccessMessage =
+          current.includes('已保存到云端') ||
+          current.includes('已加载云端最新数据') ||
+          current.includes('已加载服务器数据');
+        return isSameSuccessMessage ? '' : current;
+      });
+    }, 10000);
+
+    return () => window.clearTimeout(timer);
+  }, [cloudMessage]);
+
   useEffect(() => { saveToStorage(STORAGE_KEYS.departments, departments); }, [departments]);
   useEffect(() => { saveToStorage(STORAGE_KEYS.floatModules, floatModules); }, [floatModules]);
   useEffect(() => { saveToStorage(STORAGE_KEYS.theme, theme); }, [theme]);
