@@ -487,7 +487,7 @@ export default function InfoDisplayPage({ active, onEditingChange }: { active: b
                             }
                           }}
                         >
-                          {isToday && <em>今日</em>}
+                          {isToday && <em>今</em>}
                           {date && <span>{date.getDate()}</span>}
                           {dayItems.length > 0 && <i style={{ background: dayItems[0].color }}>{dayItems.length}</i>}
                         </button>
