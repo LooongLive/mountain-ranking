@@ -184,6 +184,35 @@
       var ANON_KEY = 'sb_publishable_rqJNhAe_muGxtreVFihdUA_Ou5g4S-N';
       var BOARD_ID = 'headquarters-suggestions';
       var fallbackBg = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80';
+      var staticFallbackData = {
+        departments: [
+          { name: 'IE', count: 60, unit: 'Ideas', position: { x: 82, y: 52 }, climberImage: '/static-media/icons/ie.png' },
+          { name: 'Procurement', count: 40, unit: 'Ideas', position: { x: 65, y: 64 }, climberImage: '/static-media/icons/procurement.png' },
+          { name: 'Finance', count: 30, unit: 'Ideas', position: { x: 58, y: 78 }, climberImage: '/static-media/icons/budget.png' },
+          { name: 'Sales', count: 20, unit: 'Ideas', position: { x: 46, y: 70 }, climberImage: '/static-media/icons/prototype.png' },
+          { name: 'OPS,QEHS,HR,GMO', count: 10, unit: 'Ideas', position: { x: 74, y: 36 }, climberImage: '/static-media/icons/contribution.png' },
+          { name: 'EC', count: 0, unit: 'Ideas', position: { x: 82, y: 91 }, climberImage: '/static-media/icons/economy.png' }
+        ],
+        floatModules: [
+          { type: 'image', title: '月度公告', contentUrl: '/static-media/posters/monthly-announcement.jpeg', position: { x: 20, y: 210 }, size: { width: 300, height: 424 } },
+          { type: 'image', title: '图片公告', contentUrl: '/static-media/posters/eteams-entry.png', position: { x: 20, y: 690 }, size: { width: 300, height: 300 } }
+        ],
+        theme: {
+          mainTitle: '攀登改善高峰，共筑卓越之路',
+          subTitle: 'Climb the Peak of Improvement, Forge Excellence Together',
+          mainTitleColor: '#17324f',
+          subTitleColor: '#17324f',
+          backgroundImage: fallbackBg,
+          pathColor: '#1e3a5f',
+          pathWidth: .35,
+          pathStyle: 'dashed',
+          labelBgColor: 'rgba(255,255,255,.72)',
+          labelBorderColor: 'rgba(255,255,255,.72)',
+          labelTextColor: '#1e3a5f',
+          floatBgColor: 'rgba(255,255,255,.36)',
+          floatBorderColor: 'rgba(255,255,255,.5)'
+        }
+      };
 
       function byId(id) {
         return document.getElementById(id);
@@ -346,7 +375,8 @@
         var url = SUPABASE_URL + '/rest/v1/dashboard_pages?select=data&id=eq.headquarters-suggestions&limit=1';
         get(url, function (err, text) {
           if (err) {
-            setStatus('云端数据读取失败：' + err.message);
+            render(staticFallbackData);
+            setStatus('云端额度受限，已显示 GitHub 静态图片版本。');
             return;
           }
           try {
