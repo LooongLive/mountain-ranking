@@ -231,21 +231,36 @@
         byId('status').innerHTML = esc(text);
       }
 
-      function get(url, callback) {
+      function get(url, callback, timeoutMs) {
         var xhr = new XMLHttpRequest();
+        var done = false;
+        var timer = window.setTimeout(function () {
+          if (done) return;
+          done = true;
+          try { xhr.abort(); } catch (e) {}
+          callback(new Error('请求超时'), '');
+        }, timeoutMs || 8000);
+
+        function finish(err, text) {
+          if (done) return;
+          done = true;
+          window.clearTimeout(timer);
+          callback(err, text || '');
+        }
+
         xhr.open('GET', url, true);
         xhr.setRequestHeader('apikey', ANON_KEY);
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.onreadystatechange = function () {
           if (xhr.readyState !== 4) return;
           if (xhr.status >= 200 && xhr.status < 300) {
-            callback(null, xhr.responseText);
+            finish(null, xhr.responseText);
           } else {
-            callback(new Error('HTTP ' + xhr.status + ' ' + (xhr.responseText || '')), xhr.responseText);
+            finish(new Error('HTTP ' + xhr.status + ' ' + (xhr.responseText || '')), xhr.responseText);
           }
         };
         xhr.onerror = function () {
-          callback(new Error('网络请求失败'), '');
+          finish(new Error('网络请求失败'), '');
         };
         xhr.send(null);
       }
@@ -381,9 +396,9 @@
               if (saved) {
                 var cloudData = {};
                 if (saved.__mountain_ranking_departments) cloudData.departments = JSON.parse(saved.__mountain_ranking_departments);
-                if (saved.__mountain_ranking_modules) cloudData.modules = JSON.parse(saved.__mountain_ranking_modules);
+                if (saved.__mountain_ranking_modules) cloudData.floatModules = JSON.parse(saved.__mountain_ranking_modules);
                 if (saved.__mountain_ranking_theme) cloudData.theme = JSON.parse(saved.__mountain_ranking_theme);
-                if (cloudData.departments || cloudData.modules || cloudData.theme) {
+                if (cloudData.departments || cloudData.floatModules || cloudData.theme) {
                   render(Object.assign({}, staticFallbackData, cloudData));
                   setStatus('已从 Cloudflare 加载。每 60 秒自动刷新。');
                   return;
@@ -410,7 +425,7 @@
             setStatus('数据解析失败：' + e.message);
           }
         });
-        });
+        }, 8000);
       }
 
       load();
