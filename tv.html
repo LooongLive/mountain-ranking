@@ -183,6 +183,7 @@
       var SUPABASE_URL = 'https://ochhwfntlpzwjextvxsh.supabase.co';
       var ANON_KEY = 'sb_publishable_rqJNhAe_muGxtreVFihdUA_Ou5g4S-N';
       var BOARD_ID = 'headquarters-suggestions';
+      var CLOUDFLARE_API = 'https://mountain-ranking-api.290205693-845.workers.dev';
       var fallbackBg = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80';
       var staticFallbackData = {
         departments: [
@@ -372,6 +373,25 @@
       }
 
       function load() {
+        get(CLOUDFLARE_API + '/api/state', function (cloudErr, cloudText) {
+          if (!cloudErr) {
+            try {
+              var state = JSON.parse(cloudText);
+              var saved = state && state.data && state.data.localStorage;
+              if (saved) {
+                var cloudData = {};
+                if (saved.__mountain_ranking_departments) cloudData.departments = JSON.parse(saved.__mountain_ranking_departments);
+                if (saved.__mountain_ranking_modules) cloudData.modules = JSON.parse(saved.__mountain_ranking_modules);
+                if (saved.__mountain_ranking_theme) cloudData.theme = JSON.parse(saved.__mountain_ranking_theme);
+                if (cloudData.departments || cloudData.modules || cloudData.theme) {
+                  render(Object.assign({}, staticFallbackData, cloudData));
+                  setStatus('已从 Cloudflare 加载。每 60 秒自动刷新。');
+                  return;
+                }
+              }
+            } catch (e) {}
+          }
+
         var url = SUPABASE_URL + '/rest/v1/dashboard_pages?select=data&id=eq.headquarters-suggestions&limit=1';
         get(url, function (err, text) {
           if (err) {
@@ -389,6 +409,7 @@
           } catch (e) {
             setStatus('数据解析失败：' + e.message);
           }
+        });
         });
       }
 
