@@ -45,3 +45,10 @@ html[data-info-page-enabled="0"] .showcase-switcher button:nth-child(2){display:
 /* ticker transparent background */
 .float-module--ticker-transparent{background:transparent!important;border-color:transparent!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 .float-module--ticker-transparent>.relative,.ticker-module--transparent,.ticker-module--transparent:before,.ticker-module--transparent .ticker-viewport,.ticker-module--transparent .ticker-row{background:transparent!important;border-color:transparent!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+
+/* media loading fallback */
+img.ci-media-failed{display:none!important}
+.ci-media-placeholder{display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;min-width:24px;min-height:24px;border-radius:14px;border:1px dashed rgba(30,58,95,.28);background:rgba(255,255,255,.16);color:rgba(30,58,95,.58);font-size:12px;font-weight:850;text-align:center;padding:8px}
+.ranking-card-shell .ci-media-placeholder,.landscape-dashboard__icon .ci-media-placeholder,.mobile-dashboard__climber .ci-media-placeholder{width:28px;height:28px;min-width:28px;min-height:28px;border-radius:9px;padding:0;font-size:0}
+.ranking-card-shell .ci-media-placeholder:before,.landscape-dashboard__icon .ci-media-placeholder:before,.mobile-dashboard__climber .ci-media-placeholder:before{content:"";width:16px;height:20px;background:currentColor;clip-path:polygon(50% 0,70% 18%,62% 42%,88% 100%,62% 100%,50% 66%,38% 100%,12% 100%,38% 42%,30% 18%)}
+.announcement-page .ci-media-placeholder,.float-module .ci-media-placeholder{position:absolute;inset:0}
