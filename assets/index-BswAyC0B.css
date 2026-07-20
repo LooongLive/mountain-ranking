@@ -72,3 +72,11 @@ img.ci-media-failed{display:none!important}
   object-fit:contain!important;
 }
 .announcement-page .ci-media-placeholder,.float-module .ci-media-placeholder{position:absolute;inset:0}
+
+/* hide leaked avatar badges on ranking cards */
+.ranking-card :is(.rounded-full,[class*="rounded-full"]):has(img[alt="avatar"]),
+.ranking-card-shell :is(.rounded-full,[class*="rounded-full"]):has(img[alt="avatar"]),
+.ranking-card img[alt="avatar"],
+.ranking-card-shell img[alt="avatar"]{
+  display:none!important;
+}
