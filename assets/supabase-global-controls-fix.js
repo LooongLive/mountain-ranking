@@ -67,9 +67,14 @@
 
   const saveGlobalPageSetting = async (enabled = localEnabled()) => {
     const data = await readBoard();
+    data.infoPage = {
+      ...(data.infoPage || {}),
+      enabled,
+    };
     data[FIELD] = {
       ...(data[FIELD] || {}),
       infoPageEnabled: enabled,
+      infoPageSynced: true,
       savedAt: new Date().toISOString(),
       storage: 'supabase',
     };
@@ -84,7 +89,9 @@
 
   const loadGlobalPageSetting = async () => {
     const data = await readBoard();
-    const enabled = data?.[FIELD]?.infoPageEnabled;
+    const enabled = typeof data?.[FIELD]?.infoPageEnabled === 'boolean'
+      ? data[FIELD].infoPageEnabled
+      : data?.infoPage?.enabled;
     if (typeof enabled === 'boolean') applyPageVisibility(enabled);
   };
 
@@ -118,17 +125,22 @@
     }, 80);
   }, true);
 
+  window.__ciSaveInfoPageEnabled = saveGlobalPageSetting;
+
   document.addEventListener('click', (event) => {
     const button = event.target?.closest?.('button');
     if (!button || !/保存云端/.test(button.textContent || '')) return;
-    window.setTimeout(() => {
+    const saveLater = () => {
       saveGlobalPageSetting(localEnabled())
         .then(() => showSaveResult('全局页面开关已保存到 Supabase'))
         .catch((error) => {
           console.error(error);
           showSaveResult('全局页面开关保存失败');
         });
-    }, 1200);
+    };
+    window.setTimeout(saveLater, 800);
+    window.setTimeout(saveLater, 2500);
+    window.setTimeout(saveLater, 5000);
   }, true);
 
   loadGlobalPageSetting().catch((error) => console.warn(error));
