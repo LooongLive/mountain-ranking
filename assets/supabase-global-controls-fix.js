@@ -65,7 +65,69 @@
     return rows[0]?.data || {};
   };
 
+  const mergePageSetting = (data, enabled = localEnabled()) => {
+    const nextData = data && typeof data === 'object' ? { ...data } : {};
+    nextData.infoPage = {
+      ...(nextData.infoPage || {}),
+      enabled,
+    };
+    nextData[FIELD] = {
+      ...(nextData[FIELD] || {}),
+      infoPageEnabled: enabled,
+      infoPageSynced: true,
+      savedAt: new Date().toISOString(),
+      storage: 'supabase',
+    };
+    return nextData;
+  };
+
   const saveGlobalPageSetting = async (enabled = localEnabled()) => {
+    const data = mergePageSetting(await readBoard(), enabled);
+    const saveUrl = `${SUPABASE_URL}/functions/v1/dashboard-save`;
+    const response = await fetch(saveUrl, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ boardId: BOARD_ID, data }),
+    });
+    if (!response.ok) throw new Error(`保存云端设置失败 HTTP ${response.status}`);
+    return enabled;
+  };
+
+  const decorateSavePayload = (payload) => {
+    if (!payload || typeof payload !== 'object') return payload;
+    if (!payload.data || typeof payload.data !== 'object') return payload;
+    return {
+      ...payload,
+      data: mergePageSetting(payload.data, localEnabled()),
+    };
+  };
+
+  const installSaveBridge = () => {
+    if (window.__ciGlobalControlsSaveBridge) return;
+    window.__ciGlobalControlsSaveBridge = true;
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = async (input, init = {}) => {
+      const url = String(input?.url || input || '');
+      let nextInit = init;
+      if (url.includes('/functions/v1/dashboard-save') && typeof init?.body === 'string') {
+        try {
+          nextInit = {
+            ...init,
+            body: JSON.stringify(decorateSavePayload(JSON.parse(init.body))),
+          };
+        } catch (error) {
+          console.warn('全局页面开关合并到云端保存请求失败', error);
+        }
+      }
+      const response = await nativeFetch(input, nextInit);
+      if (url.includes('/functions/v1/dashboard-save') && response.ok) {
+        window.setTimeout(() => loadGlobalPageSetting().catch((error) => console.warn(error)), 600);
+      }
+      return response;
+    };
+  };
+
+  const saveGlobalPageSettingDirectly = async (enabled = localEnabled()) => {
     const data = await readBoard();
     data.infoPage = {
       ...(data.infoPage || {}),
@@ -80,18 +142,24 @@
     };
     const response = await fetch(endpoint(), {
       method: 'PATCH',
-      headers: { ...headers, Prefer: 'return=minimal' },
+      headers: { ...headers, Prefer: 'return=representation' },
       body: JSON.stringify({ data }),
     });
     if (!response.ok) throw new Error(`保存云端设置失败 HTTP ${response.status}`);
+    const rows = await response.json();
+    const savedData = rows[0]?.data || {};
+    const savedEnabled = typeof savedData?.infoPage?.enabled === 'boolean'
+      ? savedData.infoPage.enabled
+      : savedData?.[FIELD]?.infoPageEnabled;
+    if (savedEnabled !== enabled) throw new Error('保存云端设置失败：服务器未返回新状态');
     return enabled;
   };
 
   const loadGlobalPageSetting = async () => {
     const data = await readBoard();
-    const enabled = typeof data?.[FIELD]?.infoPageEnabled === 'boolean'
-      ? data[FIELD].infoPageEnabled
-      : data?.infoPage?.enabled;
+    const enabled = typeof data?.infoPage?.enabled === 'boolean'
+      ? data.infoPage.enabled
+      : data?.[FIELD]?.infoPageEnabled;
     if (typeof enabled === 'boolean') applyPageVisibility(enabled);
   };
 
@@ -112,37 +180,23 @@
   document.addEventListener('click', (event) => {
     const toggle = event.target?.closest?.('.ci-info-toggle');
     if (!toggle) return;
-    window.setTimeout(async () => {
+    window.setTimeout(() => {
       const enabled = localEnabled();
       applyPageVisibility(enabled);
-      try {
-        await saveGlobalPageSetting(enabled);
-        showSaveResult('活动安排页面开关已保存到 Supabase');
-      } catch (error) {
-        console.error(error);
-        showSaveResult('活动安排页面开关保存失败，请再点保存云端');
-      }
+      showSaveResult(enabled ? '活动安排已开启，请点保存云端同步' : '活动安排已关闭，请点保存云端同步');
     }, 80);
   }, true);
 
-  window.__ciSaveInfoPageEnabled = saveGlobalPageSetting;
+  window.__ciSaveInfoPageEnabled = saveGlobalPageSettingDirectly;
 
   document.addEventListener('click', (event) => {
     const button = event.target?.closest?.('button');
     if (!button || !/保存云端/.test(button.textContent || '')) return;
-    const saveLater = () => {
-      saveGlobalPageSetting(localEnabled())
-        .then(() => showSaveResult('全局页面开关已保存到 Supabase'))
-        .catch((error) => {
-          console.error(error);
-          showSaveResult('全局页面开关保存失败');
-        });
-    };
-    window.setTimeout(saveLater, 800);
-    window.setTimeout(saveLater, 2500);
-    window.setTimeout(saveLater, 5000);
+    window.setTimeout(() => showSaveResult('正在随保存云端同步全局页面开关'), 150);
+    window.setTimeout(() => loadGlobalPageSetting().catch((error) => console.warn(error)), 2500);
   }, true);
 
+  installSaveBridge();
   loadGlobalPageSetting().catch((error) => console.warn(error));
   document.addEventListener('DOMContentLoaded', () => {
     loadGlobalPageSetting().catch((error) => console.warn(error));
