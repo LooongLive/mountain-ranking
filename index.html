@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CI Ranking</title>
+    <script>
+      (() => {
+        const nativeSetInterval = window.setInterval.bind(window);
+        window.setInterval = (callback, delay, ...args) => {
+          try {
+            const source = String(callback || '');
+            if (delay === 5000 && source.includes('fetchStats') && source.includes('relabel')) {
+              return 0;
+            }
+          } catch {}
+          return nativeSetInterval(callback, delay, ...args);
+        };
+      })();
+    </script>
     <script type="module" crossorigin src="./assets/index-B69tOtio.js"></script>
     <script defer src="./assets/supabase-global-controls-fix.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-BswAyC0B.css">
@@ -15,3 +29,4 @@
     <div id="root"></div>
   </body>
 </html>
+
