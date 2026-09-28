@@ -7,6 +7,23 @@
     <title>CI Ranking</title>
     <script>
       (() => {
+        const redirectLegacyTvUrl = () => {
+          const url = new URL(window.location.href);
+          const hasTvQuery = [...url.searchParams.keys()].some((key) =>
+            ['tv', 'mode', 'view'].includes(key.toLowerCase()) &&
+            (key.toLowerCase() === 'tv' || url.searchParams.get(key)?.toLowerCase() === 'tv')
+          );
+          const hasTvHash = /^#\/?tv(?:[/?&]|$)/i.test(url.hash);
+          if (hasTvQuery || hasTvHash || /\/index\.html$/i.test(url.pathname)) {
+            window.location.replace(new URL('./', url).href);
+          }
+        };
+        window.addEventListener('hashchange', redirectLegacyTvUrl);
+        redirectLegacyTvUrl();
+      })();
+    </script>
+    <script>
+      (() => {
         const nativeSetInterval = window.setInterval.bind(window);
         window.setInterval = (callback, delay, ...args) => {
           try {
@@ -29,4 +46,3 @@
     <div id="root"></div>
   </body>
 </html>
-
