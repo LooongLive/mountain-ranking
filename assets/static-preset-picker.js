@@ -4,7 +4,7 @@
     : '';
   const STORAGE_KEY = 'ci-static-media-presets-v1';
 
-  const mediaUrl = (path) => `${BASE}${path}`;
+  const mediaUrl = (path) => window.__CI_STATIC_MEDIA__?.[path] || `${BASE}${path}`;
   const backgrounds = [
     { id: 'alpine-dawn', name: '冰川晨光', path: '/static-media/backgrounds/alpine-dawn.jpg' },
     { id: 'golden-summits', name: '金色群峰', path: '/static-media/backgrounds/golden-summits.jpg' },
